@@ -11,4 +11,5 @@ class AdminHomeController extends Controller
     {
         return view('admin.home');
     }
+    
 }
