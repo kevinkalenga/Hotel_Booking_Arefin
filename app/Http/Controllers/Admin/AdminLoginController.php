@@ -11,6 +11,7 @@ use Auth;
 
 class AdminLoginController extends Controller
 {
+     /* -------------------- Page de connexion -------------------- */
     public function index()
     {
         // $pass = Hash::make('12345678');
@@ -46,9 +47,46 @@ class AdminLoginController extends Controller
     }
     
     
-    
+    /* -------------------- Page mot de passe oublié -------------------- */
     public function forget_password()
     {
         return view('admin.forget_password');
+    }
+
+    /* -------------------- Soumission du formulaire de mot de passe oublié -------------------- */
+    public function forget_password_submit(Request $request)
+    {
+        // Validation du formulaire
+        $request->validate([
+            'email' => ['required', 'email'],
+        ]);
+
+        // Récupérer l'admin
+        $admin_data = Admin::where('email', $request->email)->first();
+
+        if (!$admin_data) {
+            return back()->with('error', 'Email not found.');
+        }
+
+        // Générer un token sécurisé (32 octets aléatoires convertis en hexadécimal)
+        $token = bin2hex(random_bytes(32));
+
+        // Mettre à jour le token directement
+        $admin_data->update(['token' => $token]);
+
+        // Créer le lien de réinitialisation
+        $reset_link = url('admin/reset-password/' . $token . '/' . $request->email);
+
+        // Message et sujet de l'email
+        $subject = "Password Reset Request";
+        $message = "To reset your password, please click on the link below:<br>";
+        $message .= "<a href='" . $reset_link . "'>Click Here</a>";
+
+        // Envoyer l'email
+        \Mail::to($request->email)->send(new Websitemail($subject, $message));
+
+        // Retourner avec un message de succès
+        return redirect()->route('admin_login')
+            ->with('success', 'Please check your email and follow the link to reset your password.');
     }
 }

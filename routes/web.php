@@ -23,3 +23,4 @@ Route::get('/admin/logout', [AdminLoginController::class, 'logout'])->name('admi
 
 // Forget password
 Route::get('/admin/forget-password', [AdminLoginController::class, 'forget_password'])->name('admin_forget_password');
+Route::post('/admin/forget-password-submit', [AdminLoginController::class, 'forget_password_submit'])->name('admin_forget_password_submit');
