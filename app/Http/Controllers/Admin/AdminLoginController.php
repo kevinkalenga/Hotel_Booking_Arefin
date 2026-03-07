@@ -12,6 +12,8 @@ class AdminLoginController extends Controller
 {
     public function index()
     {
+        // $pass = Hash::make('12345678');
+       
         return view('admin.login');
     }
     public function forget_password()
