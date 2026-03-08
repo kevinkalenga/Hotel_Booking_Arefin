@@ -5,9 +5,34 @@ use App\Http\Controllers\Admin\AdminHomeController;
 use App\Http\Controllers\Admin\AdminLoginController;
 use App\Http\Controllers\Admin\AdminProfilController;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+
+use App\Http\Controllers\Front\HomeController;
+use App\Http\Controllers\Front\AboutController;
+
+/* ------------------------- Front--------------------- */
+
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/about', [AboutController::class, 'index'])->name('about');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* ---------------------- Admin ---------------------- */
 
