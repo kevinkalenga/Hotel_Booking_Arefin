@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminHomeController;
 use App\Http\Controllers\Admin\AdminLoginController;
+use App\Http\Controllers\Admin\AdminProfilController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -28,3 +29,7 @@ Route::post('/admin/forget-password-submit', [AdminLoginController::class, 'forg
 // Reset pwd
 Route::get('/admin/reset-password/{token}/{email}', [AdminLoginController::class, 'reset_password'])->name('admin_reset_password');
 Route::post('/admin/reset-password/{token}/{email}', [AdminLoginController::class, 'reset_password_submit'])->name('admin_reset_password_submit');
+
+// Edit profile
+Route::get('/admin/edit-profile', [AdminProfilController::class, 'index'])->name('admin_profile')->middleware('admin:admin');
+Route::post('/admin/edit-profile-submit', [AdminProfilController::class, 'profile_submit'])->name('admin_profile_submit');
