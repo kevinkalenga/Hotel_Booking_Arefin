@@ -55,6 +55,8 @@ Route::group(['middleware' => 'admin'], function(){
 
    // Slider
    Route::get('/admin/slide/view', [AdminSliderController::class, 'index'])->name('admin_slide_view');
+   Route::get('/admin/slide/add', [AdminSliderController::class, 'add'])->name('admin_slide_add');
+   Route::post('/admin/slide/store', [AdminSliderController::class, 'store'])->name('admin_slide_store');
 
 
 

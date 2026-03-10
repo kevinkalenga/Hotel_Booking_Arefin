@@ -20,6 +20,7 @@
                     </li>
 
                     <li class=""><a class="nav-link" href="setting.html"><i class="fas fa-hand-point-right"></i> <span>Setting</span></a></li>
+                    <li class=""><a class="nav-link" href="{{route('admin_slide_view')}}"><i class="fas fa-hand-point-right"></i> <span>Slide</span></a></li>
 
                     <li class=""><a class="nav-link" href="form.html"><i class="fas fa-hand-point-right"></i> <span>Form</span></a></li>
 

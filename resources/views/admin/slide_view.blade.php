@@ -2,6 +2,10 @@
 
 @section('heading', 'View Slides')
 
+@section('right_top_button')
+  <a href="{{route('admin_slide_add')}}" class="btn btn-primary"><i class="fa fa-plus"></i>Add New</a>
+@endsection
+
 @section('main_content')
 
 
