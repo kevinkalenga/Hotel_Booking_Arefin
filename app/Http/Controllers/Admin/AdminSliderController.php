@@ -93,5 +93,12 @@ class AdminSliderController extends Controller
     }
 
 
-  
+    public function delete($id)
+    {
+        $single_data = Slider::where('id', $id)->first();
+        unlink(public_path('uploads/'.$single_data->photo));
+        $single_data->delete();
+
+         return redirect()->back()->with('success', 'Slider deleted successfully');
+    }
 }
