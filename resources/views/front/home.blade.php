@@ -251,34 +251,22 @@
                 <div class="row">
                     <div class="col-12">
                         <div class="testimonial-carousel owl-carousel">
+                          @foreach($testimonial_all as $item)
                             <div class="item">
                                 <div class="photo">
-                                    <img src="{{asset('uploads/t1.jpg')}}" alt="">
+                                    <img src="{{asset('uploads/'.$item->photo)}}" alt="">
                                 </div>
                                 <div class="text">
-                                    <h4>Robert Krol</h4>
-                                    <p>CEO, ABC Company</p>
+                                    <h4>{{$item->name}}</h4>
+                                    <p>{{$item->designation}}</p>
                                 </div>
                                 <div class="description">
                                     <p>
-                                        Lorem ipsum dolor sit amet, an labores explicari qui, eu nostrum copiosae argumentum has. Latine propriae quo no, unum ridens. Lorem ipsum dolor sit amet, an labores explicari qui, eu nostrum copiosae argumentum has. Latine propriae quo no, unum ridens. 
+                                        {!! $item->comment !!}
                                     </p>
                                 </div>
                             </div>
-                            <div class="item">
-                                <div class="photo">
-                                    <img src="{{asset('uploads/t2.jpg')}}" alt="">
-                                </div>
-                                <div class="text">
-                                    <h4>Sal Harvey</h4>
-                                    <p>Director, DEF Company</p>
-                                </div>
-                                <div class="description">
-                                    <p>
-                                        Lorem ipsum dolor sit amet, an labores explicari qui, eu nostrum copiosae argumentum has. Latine propriae quo no, unum ridens. Lorem ipsum dolor sit amet, an labores explicari qui, eu nostrum copiosae argumentum has. Latine propriae quo no, unum ridens. 
-                                    </p>
-                                </div>
-                            </div>
+                           @endforeach
                         </div>
                     </div>
                 </div>

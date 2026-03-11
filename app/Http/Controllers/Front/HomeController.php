@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Slider;
 use App\Models\Feature;
+use App\Models\Testimonial;
 
 class HomeController extends Controller
 {
@@ -13,6 +14,7 @@ class HomeController extends Controller
     {
         $slide_all = Slider::get();
         $feature_all = Feature::get();
-        return view('front.home', compact('slide_all', 'feature_all'));
+        $testimonial_all = Testimonial::get();
+        return view('front.home', compact('slide_all', 'feature_all', 'testimonial_all'));
     }
 }
