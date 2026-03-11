@@ -34,9 +34,7 @@
                                                     <td>
                                                         {{$row->heading}}
                                                     </td>
-                                                    <td>
-                                                        <img src="{{asset('uploads/'.$row->photo)}}" alt="" class="w_200">
-                                                    </td>
+                                            
                                                     
                                                     <td class="pt_10 pb_10">
                                                         
