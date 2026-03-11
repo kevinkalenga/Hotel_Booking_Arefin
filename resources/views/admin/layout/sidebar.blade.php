@@ -11,22 +11,19 @@
 
                     <li class="active"><a class="nav-link" href="index.html"><i class="fa fa-hand-o-right"></i> <span>Dashboard</span></a></li>
 
-                    <li class="nav-item dropdown active">
+                    {{--<li class="nav-item dropdown active">
                         <a href="#" class="nav-link has-dropdown"><i class="fa fa-hand-o-right"></i><span>Dropdown Items</span></a>
                         <ul class="dropdown-menu">
                             <li class="active"><a class="nav-link" href=""><i class="fa fa-angle-right"></i> Item 1</a></li>
                             <li class=""><a class="nav-link" href=""><i class="fa fa-angle-right"></i> Item 2</a></li>
                         </ul>
-                    </li>
+                    </li>--}}
 
-                    <li class=""><a class="nav-link" href="setting.html"><i class="fa fa-hand-o-right"></i> <span>Setting</span></a></li>
+             
                     <li class=""><a class="nav-link" href="{{route('admin_slide_view')}}"><i class="fa fa-hand-o-right"></i> <span>Slide</span></a></li>
+                    <li class=""><a class="nav-link" href="{{route('admin_feature_view')}}"><i class="fa fa-hand-o-right"></i> <span>Feature</span></a></li>
 
-                    <li class=""><a class="nav-link" href="form.html"><i class="fa fa-hand-o-right"></i> <span>Form</span></a></li>
-
-                    <li class=""><a class="nav-link" href="table.html"><i class="fa fa-hand-o-right"></i> <span>Table</span></a></li>
-
-                    <li class=""><a class="nav-link" href="invoice.html"><i class="fa fa-hand-o-right"></i> <span>Invoice</span></a></li>
+                    
 
                 </ul>
             </aside>

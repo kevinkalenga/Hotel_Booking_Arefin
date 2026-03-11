@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdminHomeController;
 use App\Http\Controllers\Admin\AdminLoginController;
 use App\Http\Controllers\Admin\AdminProfilController;
 use App\Http\Controllers\Admin\AdminSliderController;
+use App\Http\Controllers\Admin\AdminFeatureController;
 
 
 use App\Http\Controllers\Front\HomeController;
@@ -60,6 +61,14 @@ Route::group(['middleware' => 'admin'], function(){
    Route::get('/admin/slide/edit/{id}', [AdminSliderController::class, 'edit'])->name('admin_slide_edit');
    Route::post('/admin/slide/edit/{id}', [AdminSliderController::class, 'update'])->name('admin_slide_update');
    Route::get('/admin/slide/delete/{id}', [AdminSliderController::class, 'delete'])->name('admin_slide_delete');
+
+   // Feature
+   Route::get('/admin/feature/view', [AdminFeatureController::class, 'index'])->name('admin_feature_view');
+   Route::get('/admin/feature/add', [AdminFeatureController::class, 'add'])->name('admin_feature_add');
+   Route::post('/admin/feature/store', [AdminFeatureController::class, 'store'])->name('admin_feature_store');
+   Route::get('/admin/feature/edit/{id}', [AdminFeatureController::class, 'edit'])->name('admin_feature_edit');
+   Route::post('/admin/feature/edit/{id}', [AdminFeatureController::class, 'update'])->name('admin_feature_update');
+   Route::get('/admin/feature/delete/{id}', [AdminFeatureController::class, 'delete'])->name('admin_feature_delete');
 
 
 
