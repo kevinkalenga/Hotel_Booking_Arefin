@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AdminProfilController;
 use App\Http\Controllers\Admin\AdminSliderController;
 use App\Http\Controllers\Admin\AdminFeatureController;
 use App\Http\Controllers\Admin\AdminTestimonialController;
+use App\Http\Controllers\Admin\AdminPostController;
 
 
 use App\Http\Controllers\Front\HomeController;
@@ -78,6 +79,14 @@ Route::group(['middleware' => 'admin'], function(){
    Route::get('/admin/testimonial/edit/{id}', [AdminTestimonialController::class, 'edit'])->name('admin_testimonial_edit');
    Route::post('/admin/testimonial/edit/{id}', [AdminTestimonialController::class, 'update'])->name('admin_testimonial_update');
    Route::get('/admin/testimonial/delete/{id}', [AdminTestimonialController::class, 'delete'])->name('admin_testimonial_delete');
+
+   //Post
+   Route::get('/admin/post/view', [AdminPostController::class, 'index'])->name('admin_post_view');
+   Route::get('/admin/post/add', [AdminPostController::class, 'add'])->name('admin_post_add');
+   Route::post('/admin/post/store', [AdminPostController::class, 'store'])->name('admin_post_store');
+   Route::get('/admin/post/edit/{id}', [AdminPostController::class, 'edit'])->name('admin_post_edit');
+   Route::post('/admin/post/edit/{id}', [AdminPostController::class, 'update'])->name('admin_post_update');
+   Route::get('/admin/post/delete/{id}', [AdminPostController::class, 'delete'])->name('admin_post_delete');
 
 
 
