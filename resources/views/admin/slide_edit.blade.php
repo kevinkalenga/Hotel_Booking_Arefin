@@ -3,7 +3,7 @@
 @section('heading', 'Slide Edit')
 
 @section('right_top_button')
-  <a href="{{route('admin_slide_view')}}" class="btn btn-primary"><i class="fa fa-plus"></i>View All</a>
+  <a href="{{route('admin_slide_view')}}" class="btn btn-primary"><i class="fa fa-eye"></i> View All</a>
 @endsection
 
 @section('main_content')
