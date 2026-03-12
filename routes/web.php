@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AdminSliderController;
 use App\Http\Controllers\Admin\AdminFeatureController;
 use App\Http\Controllers\Admin\AdminTestimonialController;
 use App\Http\Controllers\Admin\AdminPostController;
+use App\Http\Controllers\Admin\AdminPhotoController;
 
 
 use App\Http\Controllers\Front\HomeController;
@@ -90,6 +91,14 @@ Route::group(['middleware' => 'admin'], function(){
    Route::get('/admin/post/edit/{id}', [AdminPostController::class, 'edit'])->name('admin_post_edit');
    Route::post('/admin/post/edit/{id}', [AdminPostController::class, 'update'])->name('admin_post_update');
    Route::get('/admin/post/delete/{id}', [AdminPostController::class, 'delete'])->name('admin_post_delete');
+
+   // Photo
+   Route::get('/admin/photo/view', [AdminPhotoController::class, 'index'])->name('admin_photo_view');
+   Route::get('/admin/photo/add', [AdminPhotoController::class, 'add'])->name('admin_photo_add');
+   Route::post('/admin/photo/store', [AdminPhotoController::class, 'store'])->name('admin_photo_store');
+   Route::get('/admin/photo/edit/{id}', [AdminPhotoController::class, 'edit'])->name('admin_photo_edit');
+   Route::post('/admin/photo/edit/{id}', [AdminPhotoController::class, 'update'])->name('admin_photo_update');
+   Route::get('/admin/photo/delete/{id}', [AdminPhotoController::class, 'delete'])->name('admin_photo_delete');
 
 
 
