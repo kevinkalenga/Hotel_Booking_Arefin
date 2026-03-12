@@ -3,7 +3,7 @@
 @section('heading', 'View Photos')
 
 @section('right_top_button')
-  <a href="{{route('admin_photo_add')}}" class="btn btn-primary"><i class="fa fa-plus"></i>Add New</a>
+  <a href="{{route('admin_photo_add')}}" class="btn btn-primary"><i class="fa fa-plus"></i> Add New</a>
 @endsection
 
 @section('main_content')
