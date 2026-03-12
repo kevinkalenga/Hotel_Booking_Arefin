@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\AdminFeatureController;
 use App\Http\Controllers\Admin\AdminTestimonialController;
 use App\Http\Controllers\Admin\AdminPostController;
 use App\Http\Controllers\Admin\AdminPhotoController;
+use App\Http\Controllers\Admin\AdminVideoController;
 
 
 use App\Http\Controllers\Front\HomeController;
@@ -102,6 +103,14 @@ Route::group(['middleware' => 'admin'], function(){
    Route::get('/admin/photo/edit/{id}', [AdminPhotoController::class, 'edit'])->name('admin_photo_edit');
    Route::post('/admin/photo/edit/{id}', [AdminPhotoController::class, 'update'])->name('admin_photo_update');
    Route::get('/admin/photo/delete/{id}', [AdminPhotoController::class, 'delete'])->name('admin_photo_delete');
+
+   // Video
+   Route::get('/admin/video/view', [AdminVideoController::class, 'index'])->name('admin_video_view');
+   Route::get('/admin/video/add', [AdminVideoController::class, 'add'])->name('admin_video_add');
+   Route::post('/admin/video/store', [AdminVideoController::class, 'store'])->name('admin_video_store');
+   Route::get('/admin/video/edit/{id}', [AdminVideoController::class, 'edit'])->name('admin_video_edit');
+   Route::post('/admin/video/edit/{id}', [AdminVideoController::class, 'update'])->name('admin_video_update');
+   Route::get('/admin/video/delete/{id}', [AdminVideoController::class, 'delete'])->name('admin_video_delete');
 
 
 
