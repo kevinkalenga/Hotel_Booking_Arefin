@@ -12,11 +12,13 @@ use App\Http\Controllers\Admin\AdminPostController;
 
 use App\Http\Controllers\Front\HomeController;
 use App\Http\Controllers\Front\AboutController;
+use App\Http\Controllers\Front\BlogController;
 
 /* ------------------------- Front--------------------- */
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/about', [AboutController::class, 'index'])->name('about');
+Route::get('/blog', [BlogController::class, 'index'])->name('blog');
 
 
 
