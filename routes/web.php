@@ -19,6 +19,7 @@ use App\Http\Controllers\Front\BlogController;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/about', [AboutController::class, 'index'])->name('about');
 Route::get('/blog', [BlogController::class, 'index'])->name('blog');
+Route::get('/post/{id}', [BlogController::class, 'single_post'])->name('post');
 
 
 

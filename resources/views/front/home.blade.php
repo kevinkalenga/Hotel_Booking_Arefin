@@ -291,14 +291,14 @@
                                 <img src="{{asset('uploads/'.$item->photo)}}" alt="">
                             </div>
                             <div class="text">
-                                <h2><a href="post.html">{{$item->heading}}</a></h2>
+                                <h2><a href="{{route('post', $item->id)}}">{{$item->heading}}</a></h2>
                                 <div class="short-des">
                                     <p>
                                         {!! $item->short_content !!}
                                     </p>
                                 </div>
                                 <div class="button">
-                                    <a href="post.html" class="btn btn-primary">Read More</a>
+                                    <a href="{{route('post', $item->id)}}" class="btn btn-primary">Read More</a>
                                 </div>
                             </div>
                         </div>
