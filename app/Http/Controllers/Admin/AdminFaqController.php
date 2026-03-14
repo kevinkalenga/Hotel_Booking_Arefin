@@ -12,4 +12,25 @@ class AdminFaqController extends Controller
         $faqs = Faq::get();
         return view('admin.faq_view', compact('faqs'));
     }
+
+    public function add()
+    {
+        return view('admin.faq_add');
+    }
+
+    public function store(Request $request)
+    {
+            $request->validate([
+            'question' => 'required',
+            'answer' => 'required'
+             
+        ]);
+
+        $obj = new Faq();
+        $obj->question = $request->question;
+        $obj->answer = $request->answer;
+        $obj->save();
+
+        return redirect()->back()->with('success', 'FAQ is added Successfully');
+    }
 }
