@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\AdminTestimonialController;
 use App\Http\Controllers\Admin\AdminPostController;
 use App\Http\Controllers\Admin\AdminPhotoController;
 use App\Http\Controllers\Admin\AdminVideoController;
+use App\Http\Controllers\Admin\AdminFaqController;
 
 
 use App\Http\Controllers\Front\HomeController;
@@ -113,6 +114,14 @@ Route::group(['middleware' => 'admin'], function(){
    Route::get('/admin/video/edit/{id}', [AdminVideoController::class, 'edit'])->name('admin_video_edit');
    Route::post('/admin/video/edit/{id}', [AdminVideoController::class, 'update'])->name('admin_video_update');
    Route::get('/admin/video/delete/{id}', [AdminVideoController::class, 'delete'])->name('admin_video_delete');
+
+   // Faq
+   Route::get('/admin/faq/view', [AdminFaqController::class, 'index'])->name('admin_faq_view');
+   Route::get('/admin/faq/add', [AdminFaqController::class, 'add'])->name('admin_faq_add');
+   Route::post('/admin/faq/store', [AdminFaqController::class, 'store'])->name('admin_faq_store');
+   Route::get('/admin/faq/edit/{id}', [AdminFaqController::class, 'edit'])->name('admin_faq_edit');
+   Route::post('/admin/faq/edit/{id}', [AdminFaqController::class, 'update'])->name('admin_faq_update');
+   Route::get('/admin/faq/delete/{id}', [AdminFaqController::class, 'delete'])->name('admin_faq_delete');
 
 
 
