@@ -21,6 +21,7 @@ use App\Http\Controllers\Front\PhotoController;
 use App\Http\Controllers\Front\VideoController;
 use App\Http\Controllers\Front\FaqController;
 use App\Http\Controllers\Front\TermsController;
+use App\Http\Controllers\Front\PrivacyController;
 
 /* ------------------------- Front--------------------- */
 
@@ -32,6 +33,7 @@ Route::get('/photo-gallery', [PhotoController::class, 'index'])->name('photo_gal
 Route::get('/video-gallery', [VideoController::class, 'index'])->name('video_gallery');
 Route::get('/faq', [FaqController::class, 'index'])->name('faq');
 Route::get('/terms-and-conditions', [TermsController::class, 'index'])->name('terms');
+Route::get('/privacy-policy', [PrivacyController::class, 'index'])->name('privacy');
 
 
 
