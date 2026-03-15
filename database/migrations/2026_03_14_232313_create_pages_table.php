@@ -16,6 +16,9 @@ return new class extends Migration
             $table->text('about_heading');
             $table->text('about_content');
             $table->integer('about_status');
+            $table->text('terms_heading');
+            $table->text('terms_content');
+            $table->integer('terms_status');
             $table->timestamps();
         });
     }

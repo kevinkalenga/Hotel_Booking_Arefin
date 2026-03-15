@@ -130,6 +130,10 @@ Route::group(['middleware' => 'admin'], function(){
    Route::get('/admin/page/about', [AdminPageController::class, 'about'])->name('admin_page_about');
    Route::post('/admin/page/about/update', [AdminPageController::class, 'about_update'])->name('admin_page_about_update');
 
+    // Terms
+   Route::get('/admin/page/terms', [AdminPageController::class, 'terms'])->name('admin_page_terms');
+   Route::post('/admin/page/terms/update', [AdminPageController::class, 'terms_update'])->name('admin_page_terms_update');
+
 
 
 
