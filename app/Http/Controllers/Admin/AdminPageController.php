@@ -156,4 +156,31 @@ class AdminPageController extends Controller
 
         return redirect()->back()->with('success', 'Data is updated successfully');
     }
+
+
+    // Faq
+    public function faq()
+    {
+        $page_data = Page::where('id', 1)->first();
+        return view('admin.page_faq', compact('page_data'));
+    }
+
+    public function faq_update(Request $request)
+    {
+        
+        $request->validate([
+         'faq_heading' => 'required|string|max:255',
+         'faq_status'  => 'required|in:0,1',
+        ]);
+
+        
+        
+        $obj = Page::where('id', 1)->first();
+
+        $obj->faq_heading = $request->faq_heading;
+        $obj->faq_status = $request->faq_status;
+        $obj->save();
+
+        return redirect()->back()->with('success', 'Data is updated successfully');
+    }
 }

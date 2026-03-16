@@ -157,7 +157,9 @@ Route::group(['middleware' => 'admin'], function(){
    Route::get('/admin/page/video-gallery', [AdminPageController::class, 'video_gallery'])->name('admin_page_video_gallery');
    Route::post('/admin/page/video-gallery/update', [AdminPageController::class, 'video_gallery_update'])->name('admin_page_video_gallery_update');
 
-
+   // Faq
+   Route::get('/admin/page/faq', [AdminPageController::class, 'faq'])->name('admin_page_faq');
+   Route::post('/admin/page/faq/update', [AdminPageController::class, 'faq_update'])->name('admin_page_faq_update');
 
 
 
