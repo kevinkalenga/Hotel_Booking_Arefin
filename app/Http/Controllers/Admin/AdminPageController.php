@@ -74,4 +74,32 @@ class AdminPageController extends Controller
 
         return redirect()->back()->with('success', 'Data is updated successfully');
     }
+
+    // contact
+    public function contact()
+    {
+        $page_data = Page::where('id', 1)->first();
+        return view('admin.page_contact', compact('page_data'));
+    }
+
+    public function contact_update(Request $request)
+    {
+        
+        $request->validate([
+         'contact_heading' => 'required|string|max:255',
+         'contact_map' => 'required|string',
+         'contact_status'  => 'required|in:0,1',
+        ]);
+
+        
+        
+        $obj = Page::where('id', 1)->first();
+
+        $obj->contact_heading = $request->contact_heading;
+        $obj->contact_map = $request->contact_map;
+        $obj->contact_status = $request->contact_status;
+        $obj->save();
+
+        return redirect()->back()->with('success', 'Data is updated successfully');
+    }
 }

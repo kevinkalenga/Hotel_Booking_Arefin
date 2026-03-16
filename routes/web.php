@@ -142,6 +142,10 @@ Route::group(['middleware' => 'admin'], function(){
    Route::get('/admin/page/privacy', [AdminPageController::class, 'privacy'])->name('admin_page_privacy');
    Route::post('/admin/page/privacy/update', [AdminPageController::class, 'privacy_update'])->name('admin_page_privacy_update');
 
+    // Contact
+   Route::get('/admin/page/contact', [AdminPageController::class, 'contact'])->name('admin_page_contact');
+   Route::post('/admin/page/contact/update', [AdminPageController::class, 'contact_update'])->name('admin_page_contact_update');
+
 
 
 
