@@ -129,4 +129,31 @@ class AdminPageController extends Controller
 
         return redirect()->back()->with('success', 'Data is updated successfully');
     }
+
+
+    // Video Gallery
+    public function video_gallery()
+    {
+        $page_data = Page::where('id', 1)->first();
+        return view('admin.page_video_gallery', compact('page_data'));
+    }
+
+    public function video_gallery_update(Request $request)
+    {
+        
+        $request->validate([
+         'video_gallery_heading' => 'required|string|max:255',
+         'video_gallery_status'  => 'required|in:0,1',
+        ]);
+
+        
+        
+        $obj = Page::where('id', 1)->first();
+
+        $obj->video_gallery_heading = $request->video_gallery_heading;
+        $obj->video_gallery_status = $request->video_gallery_status;
+        $obj->save();
+
+        return redirect()->back()->with('success', 'Data is updated successfully');
+    }
 }
