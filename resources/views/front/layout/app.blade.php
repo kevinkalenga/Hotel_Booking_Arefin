@@ -113,9 +113,13 @@
                                 <li class="nav-item">
                                     <a href="{{route('blog')}}" class="nav-link">Blog</a>
                                 </li>
-                                <li class="nav-item">
-                                    <a href="contact.html" class="nav-link">Contact</a>
-                                </li>
+                                @if($global_page_data->contact_status == 1)
+                                 <li class="nav-item">
+                                    <a href="{{route('contact')}}" class="nav-link">
+                                         {{$global_page_data->contact_heading}}
+                                    </a>
+                                 </li>
+                                @endif
                             </ul>
                         </div>
                     </nav>
@@ -142,7 +146,9 @@
                                    <li><a href="{{route('video_gallery')}}">{{$global_page_data->video_gallery_heading}}</a></li>
                                 @endif
                                 <li><a href="{{route('blog')}}">Blog</a></li>
-                                <li><a href="contact.html">Contact</a></li>
+                                @if($global_page_data->contact_status == 1)
+                                  <li><a href="{{route('contact')}}">{{$global_page_data->contact_heading}}</a></li>
+                                @endif
                             </ul>
                         </div>
                     </div>
