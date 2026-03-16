@@ -21,6 +21,7 @@
                             <li class="{{ Request::is('admin/page/privacy')  ? 'active': '' }}"><a class="nav-link" href="{{route('admin_page_privacy')}}"><i class="fa fa-angle-right"></i> Privacy Policy</a></li>
                             <li class="{{ Request::is('admin/page/terms')  ? 'active': '' }}"><a class="nav-link" href="{{route('admin_page_terms')}}"><i class="fa fa-angle-right"></i> Terms and Conditions</a></li>
                             <li class="{{ Request::is('admin/page/contact')  ? 'active': '' }}"><a class="nav-link" href="{{route('admin_page_contact')}}"><i class="fa fa-angle-right"></i> Contact</a></li>
+                                                        <li class="{{ Request::is('admin/page/photo-gallery')  ? 'active': '' }}"><a class="nav-link" href="{{route('admin_page_photo_gallery')}}"><i class="fa fa-angle-right"></i> Photo Gallery</a></li>
                         </ul>
                     </li>
 

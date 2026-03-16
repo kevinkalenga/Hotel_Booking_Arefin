@@ -25,6 +25,9 @@ return new class extends Migration
             $table->text('contact_heading');
             $table->text('contact_map')->nullable();
             $table->integer('contact_status');
+            $table->text('photo_gallery_heading');
+            $table->integer('photo_gallery_status');
+           
             $table->timestamps();
         });
     }
