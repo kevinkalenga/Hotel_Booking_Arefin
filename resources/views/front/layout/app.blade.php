@@ -102,12 +102,14 @@
                                 <li class="nav-item">
                                     <a href="javascript:void;" class="nav-link dropdown-toggle">Gallery</a>
                                     <ul class="dropdown-menu">
+                                      @if($global_page_data->photo_gallery_status == 1 || $global_page_data->video_gallery_status)
                                         <li class="nav-item">
-                                            <a href="{{route('photo_gallery')}}" class="nav-link">Photo Gallery</a>
+                                            <a href="{{route('photo_gallery')}}" class="nav-link">{{$global_page_data->photo_gallery_heading}}</a>
                                         </li>
                                         <li class="nav-item">
-                                            <a href="{{route('video_gallery')}}" class="nav-link">Video Gallery</a>
+                                            <a href="{{route('video_gallery')}}" class="nav-link">{{$global_page_data->video_gallery_heading}}</a>
                                         </li>
+                                       @endif
                                     </ul>
                                 </li>
                                 <li class="nav-item">
@@ -163,7 +165,9 @@
                                  @if($global_page_data->privacy_status == 1)
                                    <li><a href="{{route('privacy')}}">{{$global_page_data->privacy_heading}}</a></li>
                                  @endif
-                                <li><a href="{{route('faq')}}">FAQ</a></li>
+                                 @if($global_page_data->terms_status == 1)
+                                   <li><a href="{{route('faq')}}">{{$global_page_data->faq_heading}}</a></li>
+                                 @endif
                             </ul>
                         </div>
                     </div>
