@@ -9,7 +9,7 @@
             <div class="container">
                 <div class="row">
                     <div class="col-md-12">
-                        <h2>Video Gallery</h2>
+                        <h2>{{$global_page_data->video_gallery_heading}}</h2>
                     </div>
                 </div>
             </div>
