@@ -35,7 +35,7 @@
                     <div class="col-md-6 left-side">
                         <ul>
                             <li class="phone-text">111-222-3333</li>
-                            <li class="email-text">contact@arefindev.com</li>
+                            <li class="email-text">contact@kevindev.com</li>
                         </ul>
                     </div>
                     <div class="col-md-6 right-side">
@@ -186,7 +186,7 @@
                                     <i class="fa fa-volume-control-phone"></i>
                                 </div>
                                 <div class="right">
-                                    contact@arefindev.com
+                                    contact@kevindev.com
                                 </div>
                             </div>
                             <div class="list-item">

@@ -17,7 +17,7 @@
             <div class="container">
                 <div class="row">
                     <div class="col-lg-6 col-md-12">
-                      <form action="" method="post" class="form_contact_ajax">
+                      <form action="{{route('contact_send_email')}}" method="post" class="form_contact_ajax">
                         @csrf
                         <div class="contact-form">
                             <div class="mb-3">
