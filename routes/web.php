@@ -174,6 +174,12 @@ Route::group(['middleware' => 'admin'], function(){
    // Payment
    Route::get('/admin/page/payment', [AdminPageController::class, 'payment'])->name('admin_page_payment');
    Route::post('/admin/page/payment/update', [AdminPageController::class, 'payment_update'])->name('admin_page_payment_update');
+   // SignUp
+   Route::get('/admin/page/signup', [AdminPageController::class, 'signup'])->name('admin_page_signup');
+   Route::post('/admin/page/signup/update', [AdminPageController::class, 'signup_update'])->name('admin_page_signup_update');
+   //  SignIn  
+   Route::get('/admin/page/signin', [AdminPageController::class, 'signin'])->name('admin_page_signin');
+   Route::post('/admin/page/signin/update', [AdminPageController::class, 'signin_update'])->name('admin_page_signin_update');
 
 
 

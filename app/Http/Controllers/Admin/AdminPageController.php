@@ -287,4 +287,56 @@ class AdminPageController extends Controller
 
         return redirect()->back()->with('success', 'Data is updated successfully');
     }
+
+    // SigUp
+    public function signup()
+    {
+        $page_data = Page::where('id', 1)->first();
+        return view('admin.page_signup', compact('page_data'));
+    }
+
+    public function signup_update(Request $request)
+    {
+        
+        $request->validate([
+         'signup_heading' => 'required|string|max:255',
+         'signup_status'  => 'required|in:0,1',
+        ]);
+
+        
+        
+        $obj = Page::where('id', 1)->first();
+
+        $obj->signup_heading = $request->signup_heading;
+        $obj->signup_status = $request->signup_status;
+        $obj->save();
+
+        return redirect()->back()->with('success', 'Data is updated successfully');
+    }
+
+    // SignIn
+    public function signin()
+    {
+        $page_data = Page::where('id', 1)->first();
+        return view('admin.page_signin', compact('page_data'));
+    }
+
+    public function signin_update(Request $request)
+    {
+        
+        $request->validate([
+         'signin_heading' => 'required|string|max:255',
+        //  'checkout_status'  => 'required|in:0,1',
+        ]);
+
+        
+        
+        $obj = Page::where('id', 1)->first();
+
+        $obj->signin_heading = $request->signin_heading;
+        $obj->signin_status = $request->signin_status;
+        $obj->save();
+
+        return redirect()->back()->with('success', 'Data is updated successfully');
+    }
 }
