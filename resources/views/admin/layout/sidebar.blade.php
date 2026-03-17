@@ -23,7 +23,8 @@
                             <li class="{{ Request::is('admin/page/contact')  ? 'active': '' }}"><a class="nav-link" href="{{route('admin_page_contact')}}"><i class="fa fa-angle-right"></i> Contact</a></li>
                             <li class="{{ Request::is('admin/page/photo-gallery')  ? 'active': '' }}"><a class="nav-link" href="{{route('admin_page_photo_gallery')}}"><i class="fa fa-angle-right"></i> Photo Gallery</a></li>
                             <li class="{{ Request::is('admin/page/video-gallery')  ? 'active': '' }}"><a class="nav-link" href="{{route('admin_page_video_gallery')}}"><i class="fa fa-angle-right"></i> Video Gallery</a></li>
-                                                        <li class="{{ Request::is('admin/page/faq')  ? 'active': '' }}"><a class="nav-link" href="{{route('admin_page_faq')}}"><i class="fa fa-angle-right"></i> FAQ</a></li>
+                            <li class="{{ Request::is('admin/page/faq')  ? 'active': '' }}"><a class="nav-link" href="{{route('admin_page_faq')}}"><i class="fa fa-angle-right"></i> FAQ</a></li>
+                            <li class="{{ Request::is('admin/page/blog')  ? 'active': '' }}"><a class="nav-link" href="{{route('admin_page_blog')}}"><i class="fa fa-angle-right"></i> Blog</a></li>
                         </ul>
                     </li>
 

@@ -183,4 +183,31 @@ class AdminPageController extends Controller
 
         return redirect()->back()->with('success', 'Data is updated successfully');
     }
+
+
+    // Blog
+    public function blog()
+    {
+        $page_data = Page::where('id', 1)->first();
+        return view('admin.page_blog', compact('page_data'));
+    }
+
+    public function blog_update(Request $request)
+    {
+        
+        $request->validate([
+         'blog_heading' => 'required|string|max:255',
+         'blog_status'  => 'required|in:0,1',
+        ]);
+
+        
+        
+        $obj = Page::where('id', 1)->first();
+
+        $obj->blog_heading = $request->blog_heading;
+        $obj->blog_status = $request->blog_status;
+        $obj->save();
+
+        return redirect()->back()->with('success', 'Data is updated successfully');
+    }
 }

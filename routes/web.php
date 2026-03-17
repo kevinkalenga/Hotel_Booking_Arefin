@@ -161,6 +161,10 @@ Route::group(['middleware' => 'admin'], function(){
    Route::get('/admin/page/faq', [AdminPageController::class, 'faq'])->name('admin_page_faq');
    Route::post('/admin/page/faq/update', [AdminPageController::class, 'faq_update'])->name('admin_page_faq_update');
 
+   // Blog
+   Route::get('/admin/page/blog', [AdminPageController::class, 'blog'])->name('admin_page_blog');
+   Route::post('/admin/page/blog/update', [AdminPageController::class, 'blog_update'])->name('admin_page_blog_update');
+
 
 
 });
