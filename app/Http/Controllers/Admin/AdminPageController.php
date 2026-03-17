@@ -210,4 +210,81 @@ class AdminPageController extends Controller
 
         return redirect()->back()->with('success', 'Data is updated successfully');
     }
+
+
+    // Cart
+    public function cart()
+    {
+        $page_data = Page::where('id', 1)->first();
+        return view('admin.page_cart', compact('page_data'));
+    }
+
+    public function cart_update(Request $request)
+    {
+        
+        $request->validate([
+         'cart_heading' => 'required|string|max:255',
+         'cart_status'  => 'required|in:0,1',
+        ]);
+
+        
+        
+        $obj = Page::where('id', 1)->first();
+
+        $obj->cart_heading = $request->cart_heading;
+        $obj->cart_status = $request->cart_status;
+        $obj->save();
+
+        return redirect()->back()->with('success', 'Data is updated successfully');
+    }
+    // Checkout
+    public function checkout()
+    {
+        $page_data = Page::where('id', 1)->first();
+        return view('admin.page_checkout', compact('page_data'));
+    }
+
+    public function checkout_update(Request $request)
+    {
+        
+        $request->validate([
+         'checkout_heading' => 'required|string|max:255',
+         'checkout_status'  => 'required|in:0,1',
+        ]);
+
+        
+        
+        $obj = Page::where('id', 1)->first();
+
+        $obj->checkout_heading = $request->checkout_heading;
+        $obj->checkout_status = $request->checkout_status;
+        $obj->save();
+
+        return redirect()->back()->with('success', 'Data is updated successfully');
+    }
+    // Payment
+    public function payment()
+    {
+        $page_data = Page::where('id', 1)->first();
+        return view('admin.page_payment', compact('page_data'));
+    }
+
+    public function payment_update(Request $request)
+    {
+        
+        $request->validate([
+         'payment_heading' => 'required|string|max:255',
+        //  'checkout_status'  => 'required|in:0,1',
+        ]);
+
+        
+        
+        $obj = Page::where('id', 1)->first();
+
+        $obj->payment_heading = $request->payment_heading;
+        // $obj->payment_status = $request->payment_status;
+        $obj->save();
+
+        return redirect()->back()->with('success', 'Data is updated successfully');
+    }
 }

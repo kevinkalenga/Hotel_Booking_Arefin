@@ -13,7 +13,8 @@
 
                     <li class="nav-item dropdown {{ Request::is('admin/page/about') ||
                       Request::is('admin/page/photo-gallery') || Request::is('admin/page/video-gallery') 
-                      || Request::is('admin/page/faq') || Request::is('admin/page/blog') || Request::is('admin/page/terms')
+                      || Request::is('admin/page/faq') || Request::is('admin/page/blog') || Request::is('admin/page/cart') ||
+                       Request::is('admin/page/checkout') || Request::is('admin/page/payment') || Request::is('admin/page/terms')
                        || Request::is('admin/page/privacy') || Request::is('admin/page/contact') ? 'active': '' }}">
                         <a href="#" class="nav-link has-dropdown"><i class="fa fa-hand-o-right"></i><span>Pages</span></a>
                         <ul class="dropdown-menu">
@@ -25,6 +26,9 @@
                             <li class="{{ Request::is('admin/page/video-gallery')  ? 'active': '' }}"><a class="nav-link" href="{{route('admin_page_video_gallery')}}"><i class="fa fa-angle-right"></i> Video Gallery</a></li>
                             <li class="{{ Request::is('admin/page/faq')  ? 'active': '' }}"><a class="nav-link" href="{{route('admin_page_faq')}}"><i class="fa fa-angle-right"></i> FAQ</a></li>
                             <li class="{{ Request::is('admin/page/blog')  ? 'active': '' }}"><a class="nav-link" href="{{route('admin_page_blog')}}"><i class="fa fa-angle-right"></i> Blog</a></li>
+                            <li class="{{ Request::is('admin/page/cart')  ? 'active': '' }}"><a class="nav-link" href="{{route('admin_page_cart')}}"><i class="fa fa-angle-right"></i> Cart</a></li>
+                            <li class="{{ Request::is('admin/page/checkout')  ? 'active': '' }}"><a class="nav-link" href="{{route('admin_page_checkout')}}"><i class="fa fa-angle-right"></i> Checkout</a></li>
+                            <li class="{{ Request::is('admin/page/payment')  ? 'active': '' }}"><a class="nav-link" href="{{route('admin_page_payment')}}"><i class="fa fa-angle-right"></i> Payment</a></li>
                         </ul>
                     </li>
 
