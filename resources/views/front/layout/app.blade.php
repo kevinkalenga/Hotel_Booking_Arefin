@@ -229,12 +229,15 @@
                             <p>
                                 In order to get the latest news and other great items, please subscribe us here: 
                             </p>
-                            <form action="" method="post">
+                            <form action="{{route('subscriber_send_email')}}" method="post" class="form_subscribe_ajax">
+                                @csrf
                                 <div class="form-group">
-                                    <input type="text" name="" class="form-control">
+                                    <input type="text" name="email" class="form-control">
+                                    <span class="text-danger error-text email_error"></span>
                                 </div>
                                 <div class="form-group">
                                     <input type="submit" class="btn btn-primary" value="Subscribe Now">
+                                    
                                 </div>
                             </form>
                         </div>
@@ -252,7 +255,80 @@
             <i class="fa fa-angle-up"></i>
         </div>
 		
-         @include('front.layout.scripts_footer')     
+         @include('front.layout.scripts_footer')  
+         
+@if(session('success'))
+   <script>
+        iziToast.show({
+            message: '{{session("success")}}',
+            color: 'green',
+            position: 'topRight',
+        });
+    </script>
+@endif
+
+
+
+<script>
+    (function($){
+        $(".form_subscribe_ajax").on('submit', function(e){
+            e.preventDefault();
+            // $('#loader').show();
+            var form = this;
+            
+            var email = $(form).find('input[name="email"]').val();
+
+            // reset erreurs
+            $(form).find('span.error-text').text('');
+
+            //  validation simple
+            if(email.trim() == ''){
+                $(form).find('span.email_error').text('Email is required');
+                return; //  STOP → pas de loader, pas d'AJAX
+            }
+
+            $('#loader').show(); // ✔ seulement si OK
+            
+            
+            
+            
+            $.ajax({
+                url:$(form).attr('action'),
+                method:$(form).attr('method'),
+                data:new FormData(form),
+                processData:false,
+                dataType:'json',
+                contentType:false,
+                beforeSend:function(){
+                    $(form).find('span.error-text').text('');
+                },
+                success:function(data)
+                {
+                    console.log(data); 
+                    $('#loader').hide();
+                    if(data.code == 0)
+                    {
+                        $.each(data.error_message, function(prefix, val) {
+                            $(form).find('span.'+prefix+'_error').text(val[0]);
+                        });
+                    }
+                    else if(data.code == 1)
+                    {
+                        $(form)[0].reset();
+                        iziToast.success({
+                            title: '',
+                            position: 'topRight',
+                            message: data.success_message,
+                        });
+                    }
+                    
+                }
+            });
+        });
+      
+    })(jQuery);
+</script>
+<div id="loader"></div>
 		
    </body>
 </html>

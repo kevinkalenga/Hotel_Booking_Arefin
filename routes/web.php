@@ -23,6 +23,7 @@ use App\Http\Controllers\Front\FaqController;
 use App\Http\Controllers\Front\TermsController;
 use App\Http\Controllers\Front\PrivacyController;
 use App\Http\Controllers\Front\ContactController;
+use App\Http\Controllers\Front\SubscriberController;
 
 /* ------------------------- Front--------------------- */
 
@@ -37,6 +38,8 @@ Route::get('/terms-and-conditions', [TermsController::class, 'index'])->name('te
 Route::get('/privacy-policy', [PrivacyController::class, 'index'])->name('privacy');
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact/send-email', [ContactController::class, 'send_email'])->name('contact_send_email');
+Route::post('/subscriber/send-email', [SubscriberController::class, 'send_email'])->name('subscriber_send_email');
+Route::get('/subscriber/verify/{email}/{token}', [SubscriberController::class, 'verify'])->name('subscriber_verify');
 
 
 
@@ -168,18 +171,24 @@ Route::group(['middleware' => 'admin'], function(){
    // Cart
    Route::get('/admin/page/cart', [AdminPageController::class, 'cart'])->name('admin_page_cart');
    Route::post('/admin/page/cart/update', [AdminPageController::class, 'cart_update'])->name('admin_page_cart_update');
+   
    // Checkout
    Route::get('/admin/page/checkout', [AdminPageController::class, 'checkout'])->name('admin_page_checkout');
    Route::post('/admin/page/checkout/update', [AdminPageController::class, 'checkout_update'])->name('admin_page_checkout_update');
+   
    // Payment
    Route::get('/admin/page/payment', [AdminPageController::class, 'payment'])->name('admin_page_payment');
    Route::post('/admin/page/payment/update', [AdminPageController::class, 'payment_update'])->name('admin_page_payment_update');
+   
    // SignUp
    Route::get('/admin/page/signup', [AdminPageController::class, 'signup'])->name('admin_page_signup');
    Route::post('/admin/page/signup/update', [AdminPageController::class, 'signup_update'])->name('admin_page_signup_update');
+   
    //  SignIn  
    Route::get('/admin/page/signin', [AdminPageController::class, 'signin'])->name('admin_page_signin');
    Route::post('/admin/page/signin/update', [AdminPageController::class, 'signin_update'])->name('admin_page_signin_update');
+
+   
 
 
 
