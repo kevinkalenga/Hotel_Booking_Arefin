@@ -14,5 +14,29 @@ class AdminSubscriberController extends Controller
         $all_subscribers = Subscriber::where('status', 1)->get();
         return view('admin.subscriber_show', compact('all_subscribers'));
     }
+
+    public function send_email()
+    {
+       return view('admin.subscriber_send_email');
+    }
+    public function send_email_submit(Request $request)
+    {
+       $request->validate([
+          'subject' => 'required',
+          'message' => 'required'
+       ]);
+
+            $subject = $request->subject;
+            $message = $request->message;
+
+            $all_subscribers = Subscriber::where('status', 1)->get();
+            
+            foreach ($all_subscribers as $item) {
+               \Mail::to($item->email)->queue(new Websitemail($subject, $message));
+            }
+
+
+             return redirect()->back()->with('success', 'Email is sent Successfully');
+    }
     
 }

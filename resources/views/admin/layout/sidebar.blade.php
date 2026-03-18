@@ -44,11 +44,11 @@
                     <li class="{{ Request::is('admin/faq/*') ? 'active': '' }}"><a class="nav-link" href="{{route('admin_faq_view')}}"><i class="fa fa-hand-o-right"></i> <span>FAQ</span></a></li>
 
 
-                    <li class="nav-item dropdown {{ Request::is('admin/subscriber/show') ? 'active': '' }}">
+                    <li class="nav-item dropdown {{ Request::is('admin/subscriber/show') || Request::is('admin/subscriber/send-email') ? 'active': '' }}">
                         <a href="#" class="nav-link has-dropdown"><i class="fa fa-hand-o-right"></i> <span>Subscribers</span></a>
                         <ul class="dropdown-menu">
                             <li class="{{ Request::is('admin/subscriber/show')  ? 'active': '' }}"><a class="nav-link" href="{{route('admin_subscriber_show')}}"><i class="fa fa-angle-right"></i> All Subscribers</a></li>
-                            
+                            <li class="{{ Request::is('admin/subscriber/send-email')}}"><a class="nav-link" href="{{route('admin_subscriber_send_email')}}"><i class="fa fa-angle-right"></i> Send Email</a></li>
                             
                         </ul>
                     </li>
