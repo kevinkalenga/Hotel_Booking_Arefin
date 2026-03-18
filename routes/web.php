@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\AdminPhotoController;
 use App\Http\Controllers\Admin\AdminVideoController;
 use App\Http\Controllers\Admin\AdminFaqController;
 use App\Http\Controllers\Admin\AdminPageController;
+use App\Http\Controllers\Admin\AdminSubscriberController;
 
 
 use App\Http\Controllers\Front\HomeController;
@@ -187,6 +188,10 @@ Route::group(['middleware' => 'admin'], function(){
    //  SignIn  
    Route::get('/admin/page/signin', [AdminPageController::class, 'signin'])->name('admin_page_signin');
    Route::post('/admin/page/signin/update', [AdminPageController::class, 'signin_update'])->name('admin_page_signin_update');
+
+     // subscriber
+   Route::get('/admin/subscriber/show', [AdminSubscriberController::class, 'show'])->name('admin_subscriber_show');
+  
 
    
 
