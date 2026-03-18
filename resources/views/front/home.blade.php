@@ -99,139 +99,32 @@
                     </div>
                 </div>
                 <div class="row">
+                  @foreach($room_all as $item)
+                    @if($loop->iteration > 4)
+                      @break 
+                    @endif
                     <div class="col-md-3">
                         <div class="inner">
                             <div class="photo">
-                                <img src="{{asset('uploads/1.jpg')}}" alt="">
+                                <img src="{{asset('uploads/'.$item->featured_photo)}}" alt="">
                             </div>
                             <div class="text">
-                                <h2><a href="">Standard Couple Bed</a></h2>
+                                <h2><a href="">{{$item->name}}</a></h2>
                                 <div class="price">
-                                    $100/night
+                                     ${{ $item->price }}/night
                                 </div>
                                 <div class="button">
-                                    <a href="room-detail.html" class="btn btn-primary">See Detail</a>
+                                    <a href="{{route('room_detail', $item->id)}}" class="btn btn-primary">See Detail</a>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="inner">
-                            <div class="photo">
-                                <img src="{{asset('uploads/2.jpg')}}" alt="">
-                            </div>
-                            <div class="text">
-                                <h2><a href="">Standard Couple Bed</a></h2>
-                                <div class="price">
-                                    $100/night
-                                </div>
-                                <div class="button">
-                                    <a href="room-detail.html" class="btn btn-primary">See Detail</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="inner">
-                            <div class="photo">
-                                <img src="{{asset('uploads/3.jpg')}}" alt="">
-                            </div>
-                            <div class="text">
-                                <h2><a href="">Standard Couple Bed</a></h2>
-                                <div class="price">
-                                    $100/night
-                                </div>
-                                <div class="button">
-                                    <a href="room-detail.html" class="btn btn-primary">See Detail</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="inner">
-                            <div class="photo">
-                                <img src="{{asset('uploads/4.jpg')}}" alt="">
-                            </div>
-                            <div class="text">
-                                <h2><a href="">Standard Couple Bed</a></h2>
-                                <div class="price">
-                                    $100/night
-                                </div>
-                                <div class="button">
-                                    <a href="room-detail.html" class="btn btn-primary">See Detail</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="inner">
-                            <div class="photo">
-                                <img src="{{asset('uploads/5.jpg')}}" alt="">
-                            </div>
-                            <div class="text">
-                                <h2><a href="">Standard Couple Bed</a></h2>
-                                <div class="price">
-                                    $100/night
-                                </div>
-                                <div class="button">
-                                    <a href="room-detail.html" class="btn btn-primary">See Detail</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="inner">
-                            <div class="photo">
-                                <img src="{{asset('uploads/6.jpg')}}" alt="">
-                            </div>
-                            <div class="text">
-                                <h2><a href="">Standard Couple Bed</a></h2>
-                                <div class="price">
-                                    $100/night
-                                </div>
-                                <div class="button">
-                                    <a href="room-detail.html" class="btn btn-primary">See Detail</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="inner">
-                            <div class="photo">
-                                <img src="{{asset('uploads/7.jpg')}}" alt="">
-                            </div>
-                            <div class="text">
-                                <h2><a href="">Standard Couple Bed</a></h2>
-                                <div class="price">
-                                    $100/night
-                                </div>
-                                <div class="button">
-                                    <a href="room-detail.html" class="btn btn-primary">See Detail</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="inner">
-                            <div class="photo">
-                                <img src="{{asset('uploads/1.jpg')}}" alt="">
-                            </div>
-                            <div class="text">
-                                <h2><a href="">Standard Couple Bed</a></h2>
-                                <div class="price">
-                                    $100/night
-                                </div>
-                                <div class="button">
-                                    <a href="room-detail.html" class="btn btn-primary">See Detail</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                 @endforeach  
                 </div>
                 <div class="row">
                     <div class="col-md-12">
                         <div class="big-button">
-                            <a href="" class="btn btn-primary">See All Rooms</a>
+                            <a href="#" class="btn btn-primary">See All Rooms</a>
                         </div>
                     </div>
                 </div>

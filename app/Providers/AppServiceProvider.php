@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
 use App\Models\Page;
+use App\Models\Room;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -24,8 +25,10 @@ class AppServiceProvider extends ServiceProvider
 
            // Optional: load shared data(get all information)
         $page_data = Page::where('id', 1)->first();
+        $room_data = Room::get();
 
          // Share data globally with all views
         view()->share('global_page_data', $page_data);
+        view()->share('global_room_data', $room_data);
     }
 }
