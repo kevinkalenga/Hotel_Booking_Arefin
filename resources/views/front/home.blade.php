@@ -124,7 +124,7 @@
                 <div class="row">
                     <div class="col-md-12">
                         <div class="big-button">
-                            <a href="#" class="btn btn-primary">See All Rooms</a>
+                            <a href="{{route('room')}}" class="btn btn-primary">See All Rooms</a>
                         </div>
                     </div>
                 </div>

@@ -212,6 +212,31 @@ class AdminPageController extends Controller
     }
 
 
+    // room
+    public function room()
+    {
+        $page_data = Page::where('id', 1)->first();
+        return view('admin.page_room', compact('page_data'));
+    }
+
+    public function room_update(Request $request)
+    {
+        
+        $request->validate([
+         'room_heading' => 'required|string|max:255',
+        ]);
+
+        
+        
+        $obj = Page::where('id', 1)->first();
+
+        $obj->room_heading = $request->room_heading;
+        $obj->save();
+
+        return redirect()->back()->with('success', 'Data is updated successfully');
+    }
+
+
     // Cart
     public function cart()
     {
