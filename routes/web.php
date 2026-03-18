@@ -240,6 +240,7 @@ Route::group(['middleware' => 'admin'], function(){
 // customer - signin, signup, Logout and forget pwd
 Route::get('/signup', [CustomerAuthController::class, 'signup'])->name('customer_signup');
 Route::post('/signup-submit', [CustomerAuthController::class, 'signup_submit'])->name('customer_signup_submit');
+Route::get('/signup-verify/{email}/{token}', [CustomerAuthController::class, 'signup_verify'])->name('customer_signup_verify');
 Route::get('/login', [CustomerAuthController::class, 'login'])->name('customer_login');
 Route::post('/login-submit', [CustomerAuthController::class, 'login_submit'])->name('customer_login_submit');
 Route::get('/customer/logout', [CustomerAuthController::class, 'logout'])->name('customer_logout');
