@@ -5,7 +5,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Room;
 use App\Models\Amenity;
-use App\Models\RoomPhoto;
+
 
 class AdminRoomController extends Controller
 {
@@ -153,6 +153,30 @@ class AdminRoomController extends Controller
     return redirect()->back()->with('success', 'Room updated successfully');
   }
 
+   
+ public function delete($id)
+ {
+    $single_data = Room::find($id);
 
+    // If no room found, abort gracefully
+    if (!$single_data) {
+        return redirect()->back()->with('error', 'Room not found.');
+    }
+
+    // Delete the featured photo if it exists
+    if (!empty($single_data->featured_photo)) {
+        $photo_path = public_path('uploads/' . $single_data->featured_photo);
+        if (file_exists($photo_path)) {
+            unlink($photo_path);
+        }
+    }
+
+ 
+
+    // Finally delete the room itself
+    $single_data->delete();
+
+    return redirect()->back()->with('success', 'Room deleted successfully');
+   }
   
 }
