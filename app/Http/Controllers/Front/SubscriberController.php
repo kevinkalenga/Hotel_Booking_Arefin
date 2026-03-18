@@ -24,10 +24,15 @@ class SubscriberController extends Controller
         }else {
           
             // Check if email already exists
-             $existing = Subscriber::where('email', $request->email)->first();
-             if ($existing) {
-                 return redirect()->back()->with('error', 'This email is already subscribed!');
-             }
+            $existing = Subscriber::where('email', $request->email)->first();
+            if ($existing) {
+                return response()->json([
+                 'code' => 0,
+                 'error_message' => [
+                 'email' => ['This email is already subscribed!']
+                 ]
+                ]);
+            }
          
           $token = hash('sha256', time());
           
@@ -68,8 +73,18 @@ class SubscriberController extends Controller
          }
     }
 
-    public function verify()
+    public function verify($email, $token)
     {
-      
+      $subscriber_data = Subscriber::where('email', $email)->where('token', $token)->first();
+
+      if($subscriber_data) {
+         $subscriber_data->token = "";
+         $subscriber_data->status = 1;
+         $subscriber_data->update();
+
+          return redirect()->route('home')->with('success', 'Your subscription is verified successfully!');
+      } else {
+          return redirect()->route('home');
+      }
     }
 }
