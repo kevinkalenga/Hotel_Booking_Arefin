@@ -11,6 +11,15 @@
 
                     <li class="{{ Request::is('admin/home') ? 'active': '' }}"><a class="nav-link" href="{{route('admin_home')}}"><i class="fa fa-hand-o-right"></i> <span>Dashboard</span></a></li>
 
+                    <li class="nav-item dropdown {{ Request::is('admin/amenity/view') ? 'active': '' }}">
+                        <a href="#" class="nav-link has-dropdown"><i class="fa fa-hand-o-right"></i> <span>Room Section</span></a>
+                        <ul class="dropdown-menu">
+                            <li class="{{ Request::is('admin/amenity/view')  ? 'active': '' }}"><a class="nav-link" href="{{route('admin_amenity_view')}}"><i class="fa fa-angle-right"></i> Amenities</a></li>
+                            {{--<li class="{{ Request::is('admin/room/view')  ? 'active': '' }}"><a class="nav-link" href="{{route('admin_room_view')}}"><i class="fa fa-angle-right"></i> Rooms</a></li>--}}
+                            
+                        </ul>
+                    </li>
+
                     <li class="nav-item dropdown {{ Request::is('admin/page/about') ||
                       Request::is('admin/page/photo-gallery') || Request::is('admin/page/video-gallery') 
                       || Request::is('admin/page/faq') || Request::is('admin/page/blog') || Request::is('admin/page/cart') ||
