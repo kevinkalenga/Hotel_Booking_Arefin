@@ -12,4 +12,56 @@ class AdminAmenityController extends Controller
         $amenities = Amenity::get();
         return view('admin.amenity_view', compact('amenities'));
     }
+
+    public function add()
+    {
+        return view('admin.amenity_add');
+    }
+
+    public function store(Request $request)
+    {
+            $request->validate([
+            'name' => 'required',
+            
+             
+        ]);
+
+        $obj = new Amenity();
+        $obj->name = $request->name;
+        
+        $obj->save();
+
+        return redirect()->back()->with('success', 'Amenity is added Successfully');
+    }
+
+
+    public function edit($id)
+    {
+        // check all the items from the slide
+        $amenity_data = Amenity::where('id', $id)->first();
+
+        return view('admin.amenity_edit', compact('amenity_data'));
+    }
+
+
+    public function update(Request $request, $id)
+    {
+       $obj = Amenity::where('id', $id)->first();
+
+        $obj->name = $request->name;
+       
+        $obj->save();
+
+        return redirect()->back()->with('success', 'Amenity updated successfully');
+    }
+
+
+    public function delete($id)
+    {
+        $single_data = Amenity::where('id', $id)->first();
+        $single_data->delete();
+
+         return redirect()->back()->with('success', 'Amenity deleted successfully');
+    }
+
 }
