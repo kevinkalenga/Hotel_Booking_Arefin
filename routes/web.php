@@ -17,6 +17,11 @@ use App\Http\Controllers\Admin\AdminAmenityController;
 use App\Http\Controllers\Admin\AdminRoomController;
 
 
+use App\Http\Controllers\Customer\CustomerHomeController;
+use App\Http\Controllers\Customer\CustomerAuthController;
+use App\Http\Controllers\Customer\CustomerProfileController;
+
+
 use App\Http\Controllers\Front\HomeController;
 use App\Http\Controllers\Front\AboutController;
 use App\Http\Controllers\Front\BlogController;
@@ -229,4 +234,19 @@ Route::group(['middleware' => 'admin'], function(){
 
 
 
+});
+
+
+// customer - signin, signup, Logout and forget pwd
+Route::get('/signup', [CustomerAuthController::class, 'signup'])->name('customer_signup');
+Route::post('/signup-submit', [CustomerAuthController::class, 'signup_submit'])->name('customer_signup_submit');
+Route::get('/login', [CustomerAuthController::class, 'login'])->name('customer_login');
+Route::post('/login-submit', [CustomerAuthController::class, 'login_submit'])->name('customer_login_submit');
+Route::get('/customer/logout', [CustomerAuthController::class, 'logout'])->name('customer_logout');
+
+// customer-middleware
+Route::group(['middleware' =>['customer:customer']], function(){
+    Route::get('/customer/home', [CustomerHomeController::class, 'index'])->name('customer_home');
+    Route::get('/customer/edit-profile', [CustomerProfileController::class, 'index'])->name('customer_profile');
+    Route::post('/customer/edit-profile-submit', [CustomerProfileController::class, 'profile_submit'])->name('customer_profile_submit');
 });
