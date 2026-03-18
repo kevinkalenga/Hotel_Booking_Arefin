@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Room;
 use App\Models\Amenity;
+use App\Models\RoomPhoto;
 
 
 class AdminRoomController extends Controller
@@ -171,6 +172,19 @@ class AdminRoomController extends Controller
         }
     }
 
+
+      // Delete related gallery photos
+    $room_photo_data = RoomPhoto::where('room_id', $id)->get();
+    foreach ($room_photo_data as $item) {
+        if (!empty($item->photo)) {
+            $gallery_path = public_path('uploads/' . $item->photo);
+            if (file_exists($gallery_path)) {
+                unlink($gallery_path);
+            }
+        }
+        $item->delete();
+    }
+
  
 
     // Finally delete the room itself
@@ -178,5 +192,52 @@ class AdminRoomController extends Controller
 
     return redirect()->back()->with('success', 'Room deleted successfully');
    }
+
+
+
+    public function gallery($id)
+    {
+        $room_data = Room::findOrFail($id);
+        $room_photos = RoomPhoto::where('room_id', $id)->get();
+       return view('admin.room_gallery', compact('room_data', 'room_photos'));
+    }
+
+    public function gallery_store(Request $request, $id)
+    {
+        $request->validate([
+            'photo' => ['image', 'mimes:jpg,jpeg,png,gif,webp', 'max:2048'],
+          
+          
+        ]);
+
+         $final_name = null;
+
+        if ($request->hasFile('photo')) {
+                $ext = $request->file('photo')->extension();
+                $finale_name = time().'.'.$ext;
+                $request->file('photo')->move(public_path('uploads/'), $finale_name);
+
+                $obj = new RoomPhoto();
+                $obj->photo = $finale_name;
+                $obj->room_id = $id;
+             
+                
+                $obj->save();
+            } else {
+                return back()->withErrors(['photo' => 'No file uploaded']);
+            }
+
+        return redirect()->back()->with('success', 'Photo is added Successfully');
+    }
+
+    public function gallery_delete($id)
+    {
+        $single_data = RoomPhoto::where('id', $id)->first();
+        unlink(public_path('uploads/'.$single_data->photo));
+        $single_data->delete();
+
+         return redirect()->back()->with('success', 'Photo deleted successfully');
+    }
+
   
 }

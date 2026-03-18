@@ -46,7 +46,7 @@
                                                         <button class="btn btn-warning" data-toggle="modal" data-target="#exampleModal{{$i}}">
                                                             Detail
                                                         </button>
-                                                        
+                                                         <a href="{{route('admin_room_gallery', $row->id)}}" class="btn btn-success">Photo Gallery</a>
                                                         <a href="{{route('admin_room_edit', $row->id)}}" class="btn btn-primary"><i class="fa fa-edit"></i></a>
                                                         <a href="{{route('admin_room_delete', $row->id)}}" class="btn btn-danger" onClick="return confirm('Are you sure?');"><i class="fa fa-trash"></i></a>
                                                     </td>
