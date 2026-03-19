@@ -43,6 +43,8 @@ return new class extends Migration
             $table->integer('signup_status');
             $table->text('signin_heading');
             $table->integer('signin_status');
+            $table->text('forget_password_heading');
+            $table->text('reset_password_heading');
             $table->timestamps();
         });
     }

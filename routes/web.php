@@ -203,6 +203,13 @@ Route::group(['middleware' => 'admin'], function(){
    Route::get('/admin/page/signin', [AdminPageController::class, 'signin'])->name('admin_page_signin');
    Route::post('/admin/page/signin/update', [AdminPageController::class, 'signin_update'])->name('admin_page_signin_update');
 
+  // Forget Password
+  Route::get('/admin/page/forget-password', [AdminPageController::class, 'forget_password'])->name('admin_page_forget_password');
+  Route::post('/admin/page/forget-password/update', [AdminPageController::class, 'forget_password_update'])->name('admin_page_forget_password_update');
+  // Reset Password
+  Route::get('/admin/page/reset-password', [AdminPageController::class, 'reset_password'])->name('admin_page_reset_password');
+  Route::post('/admin/page/reset-password/update', [AdminPageController::class, 'reset_password_update'])->name('admin_page_reset_password_update');
+
     // subscriber
    Route::get('/admin/subscriber/show', [AdminSubscriberController::class, 'show'])->name('admin_subscriber_show');
    Route::get('/admin/subscriber/send-email', [AdminSubscriberController::class, 'send_email'])->name('admin_subscriber_send_email');
@@ -244,6 +251,10 @@ Route::get('/signup-verify/{email}/{token}', [CustomerAuthController::class, 'si
 Route::get('/login', [CustomerAuthController::class, 'login'])->name('customer_login');
 Route::post('/login-submit', [CustomerAuthController::class, 'login_submit'])->name('customer_login_submit');
 Route::get('/customer/logout', [CustomerAuthController::class, 'logout'])->name('customer_logout');
+Route::get('/forget-password', [CustomerAuthController::class, 'forget_password'])->name('customer_forget_password');
+Route::post('/forget-password-submit', [CustomerAuthController::class, 'forget_password_submit'])->name('customer_forget_password_submit');
+Route::get('/reset-password/{token}/{email}', [CustomerAuthController::class, 'reset_password'])->name('customer_reset_password');
+Route::post('/reset-password/{token}/{email}', [CustomerAuthController::class, 'reset_password_submit'])->name('customer_reset_password_submit');
 
 // customer-middleware
 Route::group(['middleware' =>['customer:customer']], function(){
