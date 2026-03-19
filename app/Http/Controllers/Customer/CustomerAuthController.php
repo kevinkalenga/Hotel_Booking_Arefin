@@ -154,10 +154,53 @@ class CustomerAuthController extends Controller
         $message = "To reset your password, please click on the link below:<br>";
         $message .= "<a href='" . $reset_link . "'>Click Here</a>";
 
+
+        \Mail::to($request->email)->send(new Websitemail($subject, $message));
+
        
 
         // Retourner avec un message de succès
         return redirect()->route('customer_login')
             ->with('success', 'Please check your email and follow the link to reset your password.');
+    }
+
+
+    /* -------------------- Page de réinitialisation de mot de passe -------------------- */
+    public function reset_password($token, $email)
+    {
+        $customer_data = Customer::where('email', $email)
+            ->where('token', $token)
+            ->first();
+
+        if (!$customer_data) {
+            return redirect()->route('customer_login')->with('error', 'Invalid token or email.');
+        }
+
+        return view('front.reset_password', compact('token', 'email'));
+    }
+
+    /* -------------------- Soumission du formulaire de réinitialisation -------------------- */
+    public function reset_password_submit(Request $request, $token, $email)
+    {
+        $request->validate([
+            'password' => ['required', 'min:6'],
+            'retype_password' => ['required', 'same:password'],
+        ]);
+
+        $customer_data = Customer::where('email', $email)
+            ->where('token', $token)
+            ->first();
+
+        if (!$customer_data) {
+            return redirect()->route('customer_login')->with('error', 'Invalid token or email.');
+        }
+
+        // Réinitialiser le mot de passe
+        $customer_data->update([
+            'password' => Hash::make($request->password),
+            'token' => null,
+        ]);
+
+        return redirect()->route('customer_login')->with('success', 'Password reset successfully. You can now log in.');
     }
 }
