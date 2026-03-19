@@ -58,10 +58,25 @@ class CustomerAuthController extends Controller
 
 
 
-    public function signup_verify()
+    public function signup_verify($email, $token)
     {
       
-      
+        $customer_data = Customer::where('email', $email)->where('token', $token)->first();
+
+        if ($customer_data) {
+           $customer_data->token = "";
+           $customer_data->status = 1;
+           $customer_data->update();
+        
+            
+            
+            return redirect()->route('customer_login')
+            ->with('success', 'Your account is verified successfully!');
+        
+        }
+
+
+        return redirect()->route('customer_login')->with('error', 'Invalid verification link.');
     
     
     }
