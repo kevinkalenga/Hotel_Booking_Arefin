@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\AdminPageController;
 use App\Http\Controllers\Admin\AdminSubscriberController;
 use App\Http\Controllers\Admin\AdminAmenityController;
 use App\Http\Controllers\Admin\AdminRoomController;
+use App\Http\Controllers\Admin\AdminCustomerController;
 
 
 use App\Http\Controllers\Customer\CustomerHomeController;
@@ -99,6 +100,8 @@ Route::group(['middleware' => 'admin'], function(){
 
    //Dashbord Home
    Route::get('/admin/home', [AdminHomeController::class, 'index'])->name('admin_home');
+   Route::get('/admin/customers', [AdminCustomerController::class, 'index'])->name('admin_customer');
+   Route::get('/admin/customer/change-status/{id}', [AdminCustomerController::class, 'change_status'])->name('admin_customer_change_status');
 
    // Edit profile
    Route::get('/admin/edit-profile', [AdminProfilController::class, 'index'])->name('admin_profile');

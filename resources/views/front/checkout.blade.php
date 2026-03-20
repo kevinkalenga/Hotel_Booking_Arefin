@@ -92,7 +92,7 @@
 
                                 @foreach($cart_room_id as $i => $room_id)
                                     @php
-                                        $room = DB::table('rooms')->where('id', $room_id)->first();
+                                        $room = \App\Models\Room::find($room_id);
                                         if (!$room) continue;
 
                                         $checkin_str = $cart_checkin_date[$i] ?? null;
@@ -101,16 +101,13 @@
                                         $subtotal = 0;
 
                                         if ($checkin_str && $checkout_str) {
-                                            $d1 = explode('/', $checkin_str);
-                                            $d2 = explode('/', $checkout_str);
+                                            $checkin = strtotime($checkin_str);
+                                            $checkout = strtotime($checkout_str);
 
-                                            if(count($d1) === 3 && count($d2) === 3){
-                                                $checkin = strtotime($d1[2].'-'.$d1[1].'-'.$d1[0]);
-                                                $checkout = strtotime($d2[2].'-'.$d2[1].'-'.$d2[0]);
-                                                $nights = max(1, ($checkout - $checkin)/86400);
-                                                $subtotal = $room->price * $nights;
-                                                $total_price += $subtotal;
-                                            }
+                                            $nights = max(1, ceil(($checkout - $checkin)/86400));
+
+                                            $subtotal = $room->price * $nights;
+                                            $total_price += $subtotal;
                                         }
                                     @endphp
                                     <tr>

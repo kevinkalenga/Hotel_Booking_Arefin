@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Auth;
 use App\Models\Order;
+use App\Models\Room;
 use Illuminate\Support\Str;
 use App\Models\OrderDetail;
 use Illuminate\Support\Facades\Mail;
@@ -13,43 +14,47 @@ use App\Mail\Websitemail;
 use Stripe\Stripe;
 use Stripe\PaymentIntent;
 use DB;
+use Carbon\Carbon;
 
 class BookingController extends Controller
 {
     // ==================== CART ====================
     // Ajouter une chambre au panier
   
-    
     public function cart_submit(Request $request)
     {
-      // 1️ Validation des champs
-      $request->validate([
-        'room_id' => 'required|integer',
-        'checkin_checkout' => 'required',
-        'adult' => 'required|integer|min:1',
-      ]);
+       $request->validate([
+           'room_id' => 'required|integer',
+           'checkin_checkout' => 'required',
+           'adult' => 'required|integer|min:1',
+       ]);
 
-       // 2️ Extraction des dates
        $dates = explode(' - ', $request->checkin_checkout);
+
        if (count($dates) != 2) {
           return redirect()->back()->with('error', 'Invalid date range format.');
-       }
+        }
 
-       $checkin_date = trim($dates[0]);
-       $checkout_date = trim($dates[1]);
-       $room_id = $request->room_id;
+        //  SAFE parsing
+        $checkin = \Carbon\Carbon::createFromFormat('d/m/Y', trim($dates[0]));
+        $checkout = \Carbon\Carbon::createFromFormat('d/m/Y', trim($dates[1]));
 
+        if ($checkout->lessThanOrEqualTo($checkin)) {
+          return redirect()->back()->with('error', 'Checkout must be after checkin');
+        }
 
-      // 3 Ajout au panier (session variable array à gauche qui contient la valeur à droite)
-      session()->push('cart_room_id', $room_id);
-      session()->push('cart_checkin_date', $checkin_date);
-      session()->push('cart_checkout_date', $checkout_date);
-      session()->push('cart_adult', $request->adult);
-      session()->push('cart_children', $request->children);
+        $checkin_date = $checkin->format('Y-m-d');
+        $checkout_date = $checkout->format('Y-m-d');
 
+        session()->push('cart_room_id', $request->room_id);
+        session()->push('cart_checkin_date', $checkin_date);
+        session()->push('cart_checkout_date', $checkout_date);
+        session()->push('cart_adult', $request->adult);
+        session()->push('cart_children', $request->children);
+
+        return redirect()->back()->with('success', 'Room added to cart successfully!');
+    }
     
-    return redirect()->back()->with('success', 'Room added to cart successfully!');
-   }
 
    // Affichage du panier
    public function cart_view()
@@ -94,6 +99,12 @@ class BookingController extends Controller
     // ==================== CHECKOUT ====================
     public function checkout()
     {
+       $total_price = $this->calculateTotal();
+      
+        
+        if ($total_price < 0.50) {
+                 return redirect()->back()->with('error', 'Minimum payment is $0.50');
+        }
         // Vérifie si le client est connecté
         if (!Auth::guard('customer')->check()) {
             return redirect()->route('cart')->with('error', 'You must login in order to checkout');
@@ -104,7 +115,7 @@ class BookingController extends Controller
             return redirect()->route('cart')->with('error', 'There is no item in the cart');
         }
 
-        return view('front.checkout');
+        return view('front.checkout',  compact('total_price'));
     }
 
 
@@ -151,7 +162,7 @@ class BookingController extends Controller
           $cart_checkout_date = session()->get('cart_checkout_date', []);
 
        foreach($cart_room_id as $i => $room_id){
-            $room = DB::table('rooms')->find($room_id);
+            $room = Room::find($room_id);
             if(!$room) continue;
 
              $checkin = strtotime($cart_checkin_date[$i]);
@@ -183,7 +194,7 @@ class BookingController extends Controller
          $cart_checkout_date = session()->get('cart_checkout_date', []);
 
         foreach($cart_room_id as $i => $room_id){
-             $room = DB::table('rooms')->find($room_id);
+             $room = Room::find($room_id);
              if(!$room) continue;
 
              $checkin = strtotime($cart_checkin_date[$i]);
@@ -206,10 +217,24 @@ class BookingController extends Controller
    
     public function paymentSuccess(Request $request)
     {
-          // Client connecté
+        if(!$request->transaction_id){
+              return response()->json([
+                  'success' => false,
+                  'message' => 'Transaction ID missing'
+              ]);
+        }
+    
+      // Client connecté
        $customer_id = Auth::guard('customer')->id();
         // Montant payé
-       $paid_amount = $request->paid_amount ?? session()->get('total_price', 0);
+        $paid_amount = floatval($request->paid_amount ?? session()->get('total_price', 0));
+
+            if($paid_amount <= 0){
+              return response()->json([
+                  'success' => false,
+                  'message' => 'Invalid paid amount'
+              ]);
+            }
         // 1 Créer la commande
        $order = Order::create([
         'customer_id' => $customer_id,
@@ -232,15 +257,12 @@ class BookingController extends Controller
         // 3️ Enregistrer chaque chambre
            foreach($cart_room_id as $i => $room_id){
 
-             $room = \DB::table('rooms')->find($room_id);
+             $room = Room::find($room_id);
              if(!$room) continue;
 
              //  convertir d'abord les dates
-             $checkin_parts = explode('/', $cart_checkin_date[$i]);
-             $checkout_parts = explode('/', $cart_checkout_date[$i]);
-
-             $checkin = strtotime($checkin_parts[2] . '-' . $checkin_parts[1] . '-' . $checkin_parts[0]);
-             $checkout = strtotime($checkout_parts[2] . '-' . $checkout_parts[1] . '-' . $checkout_parts[0]);
+               $checkin = strtotime($cart_checkin_date[$i]);
+               $checkout = strtotime($cart_checkout_date[$i]);
 
              //  ensuite calcul
              $nights = max(1, ($checkout - $checkin) / 86400);
@@ -313,12 +335,16 @@ class BookingController extends Controller
        public function stripeCreateIntent(Request $request)
 {
     \Log::info('Stripe CreateIntent called'); // trace pour debug
-    $total_price = session()->get('total_price', 0);
+    $total_price = $this->calculateTotal();
+    session(['total_price' => $total_price]);
     \Log::info('Total price from session: ' . $total_price);
-
-    if ($total_price < 0.50) {
-        $total_price = 0.50; // force minimum pour Stripe
-    }
+     
+       if ($total_price < 0.50) {
+             return response()->json([
+                'success' => false,
+                'message' => 'Minimum amount is $0.50'
+            ]);
+        }
 
     try {
         \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
@@ -358,13 +384,20 @@ class BookingController extends Controller
             ]);
         }
 
+        \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+
+        $intent = \Stripe\PaymentIntent::retrieve($transaction_id);
+
+        $paid_amount = $intent->amount / 100;
+
         $customer_id = Auth::guard('customer')->id();
         $cart_room_id = session()->get('cart_room_id', []);
         $cart_checkin_date = session()->get('cart_checkin_date', []);
         $cart_checkout_date = session()->get('cart_checkout_date', []);
         $cart_adult = session()->get('cart_adult', []);
         $cart_children = session()->get('cart_children', []);
-        $total_price = session()->get('total_price', 0);
+        
+   
 
         if(empty($cart_room_id)){
             return response()->json([
@@ -379,21 +412,18 @@ class BookingController extends Controller
             'order_no' => 'ORD-' . strtoupper(Str::random(8)),
             'transaction_id' => $transaction_id,
             'payment_method' => 'Stripe',
-            'paid_amount' => $total_price,
+            'paid_amount' => $paid_amount,
             'booking_date' => now(),
             'status' => 'Completed',
         ]);
 
         // 2️⃣ Enregistrer chaque chambre
         foreach($cart_room_id as $i => $room_id){
-            $room = DB::table('rooms')->find($room_id);
+            $room = Room::find($room_id);
             if(!$room) continue;
 
-            $checkin_parts = explode('/', $cart_checkin_date[$i]);
-            $checkout_parts = explode('/', $cart_checkout_date[$i]);
-
-            $checkin = date('Y-m-d', strtotime($checkin_parts[2].'-'.$checkin_parts[1].'-'.$checkin_parts[0]));
-            $checkout = date('Y-m-d', strtotime($checkout_parts[2].'-'.$checkout_parts[1].'-'.$checkout_parts[0]));
+             $checkin = $cart_checkin_date[$i]; // déjà Y-m-d
+             $checkout = $cart_checkout_date[$i]; // déjà Y-m-d
 
             $nights = max(1, (strtotime($checkout) - strtotime($checkin))/86400);
             $subtotal = $room->price * $nights;
@@ -435,6 +465,29 @@ class BookingController extends Controller
             'redirect' => route('customer_home')
         ]);
     }
+
+
+    private function calculateTotal()
+   {
+    $total = 0;
+
+    $cart_room_id = session()->get('cart_room_id', []);
+    $cart_checkin_date = session()->get('cart_checkin_date', []);
+    $cart_checkout_date = session()->get('cart_checkout_date', []);
+
+    foreach($cart_room_id as $i => $room_id){
+        $room = Room::find($room_id);
+        if(!$room) continue;
+
+        $checkin = strtotime($cart_checkin_date[$i]);
+        $checkout = strtotime($cart_checkout_date[$i]);
+
+        $nights = max(1, ($checkout - $checkin)/86400);
+        $total += $room->price * $nights;
+    }
+
+    return $total;
+   }
 }
     
     
