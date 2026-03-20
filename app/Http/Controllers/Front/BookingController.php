@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Auth;
 use App\Models\Order;
 use Illuminate\Support\Str;
+use App\Models\OrderDetail;
 
 class BookingController extends Controller
 {
@@ -180,20 +181,62 @@ class BookingController extends Controller
    
     public function paymentSuccess(Request $request)
     {
+          // Client connecté
        $customer_id = Auth::guard('customer')->id();
+        // Montant payé
        $paid_amount = $request->paid_amount ?? session()->get('total_price', 0);
-
-      Order::create([
+        // 1 Créer la commande
+       $order = Order::create([
         'customer_id' => $customer_id,
         'order_no' => 'ORD-' . strtoupper(Str::random(8)),
         'transaction_id' => $request->transaction_id ?? null,
         'payment_method' => 'PayPal',
         'paid_amount' => $paid_amount,
         'booking_date' => now(),
-        'status' => 'paid',
+        'status' => 'Completed',
        ]);
 
-       session()->forget([
+        // 2️ Récupérer panier
+        $cart_room_id = session()->get('cart_room_id', []);
+        $cart_checkin_date = session()->get('cart_checkin_date', []);
+        $cart_checkout_date = session()->get('cart_checkout_date', []);
+        $cart_adult = session()->get('cart_adult', []);
+        $cart_children = session()->get('cart_children', []);
+
+       
+        // 3️ Enregistrer chaque chambre
+           foreach($cart_room_id as $i => $room_id){
+
+             $room = \DB::table('rooms')->find($room_id);
+             if(!$room) continue;
+
+             //  convertir d'abord les dates
+             $checkin_parts = explode('/', $cart_checkin_date[$i]);
+             $checkout_parts = explode('/', $cart_checkout_date[$i]);
+
+             $checkin = strtotime($checkin_parts[2] . '-' . $checkin_parts[1] . '-' . $checkin_parts[0]);
+             $checkout = strtotime($checkout_parts[2] . '-' . $checkout_parts[1] . '-' . $checkout_parts[0]);
+
+             //  ensuite calcul
+             $nights = max(1, ($checkout - $checkin) / 86400);
+
+            $subtotal = $room->price * $nights;
+
+             OrderDetail::create([
+                 'order_id' => $order->id,
+                 'room_id' => $room_id,
+                 'checkin_date' => date('Y-m-d', $checkin),
+                 'checkout_date' => date('Y-m-d', $checkout),
+                 'adult' => $cart_adult[$i] ?? 1,
+                 'children' => $cart_children[$i] ?? 0,
+                 'subtotal' => $subtotal,
+             ]);
+           }
+       
+       
+       
+        // 4️ Vider panier
+        session()->forget([
         'cart_room_id',
         'cart_checkin_date',
         'cart_checkout_date',
@@ -206,8 +249,8 @@ class BookingController extends Controller
       return response()->json([
         'success' => true,
         'message' => 'Order saved successfully.',
-        'redirect' => route('customer_home')
-      ], 200, ['Content-Type' => 'application/json']);
+       
+      ]);
     }
     
 
