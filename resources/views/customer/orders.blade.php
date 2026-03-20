@@ -32,7 +32,7 @@
                                                     <td>{{$row->paid_amount}}</td>
                                                     <td class="pt_10 pb_10">
                                                         
-                                                        <a href="#" class="btn btn-primary"><i class="fa fa-edit"></i></a>
+                                                        <a href="{{route('customer_invoice', $row->id)}}" class="btn btn-primary"><i class="fa fa-edit"></i></a>
         
                                                     </td>
                                                    

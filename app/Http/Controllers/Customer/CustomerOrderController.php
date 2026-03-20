@@ -17,4 +17,11 @@ class CustomerOrderController extends Controller
         $orders = Order::where('customer_id', Auth::guard('customer')->user()->id)->get();
         return view('customer.orders', compact('orders'));
     }
+
+    public function invoice($id)
+    {
+        $order = Order::where('id', $id)->first();
+        $order_detail = OrderDetail::where('order_id', $id)->get();
+        return view('customer.invoice', compact('order', 'order_detail'));
+    }
 }
