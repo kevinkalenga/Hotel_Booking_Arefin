@@ -42,9 +42,42 @@ class BookingController extends Controller
     return redirect()->back()->with('success', 'Room added to cart successfully!');
    }
 
-    // Affichage du panier
-    public function cart_view()
+   // Affichage du panier
+   public function cart_view()
+   {
+      return view('front.cart');
+   }
+
+
+   // Supprimer une chambre du panier
+    public function cart_delete($id)
     {
-        return view('front.cart');
+        $arr_cart_room_id = session()->get('cart_room_id', []);
+        $arr_cart_checkin_date = session()->get('cart_checkin_date', []);
+        $arr_cart_checkout_date = session()->get('cart_checkout_date', []);
+        $arr_cart_adult = session()->get('cart_adult', []);
+        $arr_cart_children = session()->get('cart_children', []);
+
+        if (empty($arr_cart_room_id)) {
+            return redirect()->back()->with('error', 'No items found in cart.');
+        }
+
+        // Vide le panier pour reconstruire sans l'élément supprimé
+        session()->forget([
+            'cart_room_id', 'cart_checkin_date', 'cart_checkout_date',
+            'cart_adult', 'cart_children'
+        ]);
+
+        for ($i = 0; $i < count($arr_cart_room_id); $i++) {
+            if ($arr_cart_room_id[$i] != $id) {
+                session()->push('cart_room_id', $arr_cart_room_id[$i]);
+                session()->push('cart_checkin_date', $arr_cart_checkin_date[$i]);
+                session()->push('cart_checkout_date', $arr_cart_checkout_date[$i]);
+                session()->push('cart_adult', $arr_cart_adult[$i]);
+                session()->push('cart_children', $arr_cart_children[$i]);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Cart item deleted successfully');
     }
 }

@@ -24,15 +24,7 @@
     </script>
 @endif
 
-@if (session('success'))
-    <script>
-        iziToast.show({
-            message: {!! json_encode(session('success')) !!},
-            color: 'green',
-            position: 'topRight',
-        });
-    </script>
-@endif
+
 
 <div class="page-content">
     <div class="container">
@@ -101,7 +93,7 @@
                                     @endphp
                                     <tr>
                                         <td>
-                                            <a href="#" class="cart-delete-link" onclick="return confirm('Are you sure?');">
+                                            <a href="{{ route('cart_delete', $room_id) }}" class="cart-delete-link" onclick="return confirm('Are you sure?');">
                                                 <i class="fa fa-times"></i>
                                             </a>
                                         </td>
