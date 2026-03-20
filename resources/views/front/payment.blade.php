@@ -1,6 +1,7 @@
 @extends('front.layout.app')
 
 @section('main_content')
+<script src="https://www.paypal.com/sdk/js?client-id={{ config('services.paypal.client_id') }}&currency=USD"></script>
 <div class="page-top">
     <div class="bg"></div>
     <div class="container">
@@ -27,7 +28,7 @@
 
                         <div class="paypal mt_20">
                             <h4>Pay with PayPal</h4>
-                            <p>Write necessary code here</p>
+                            <div id="paypal-button-container"></div>
                         </div>
     
                         <div class="stripe mt_20">
@@ -108,16 +109,41 @@
                         </table>
                     </div>
 
-                    {{-- PayPal + Stripe Buttons --}}
-                    <div class="mt_20">
-                        <!-- <h4>Payment</h4> -->
-                        <div id="paypal-button-container"></div>
-                        <div id="stripe-button" class="mt_2"></div>
-                    </div>
+                   
                 </div>
             </div>
 
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    paypal.Buttons({
+
+        createOrder: function(data, actions) {
+            return actions.order.create({
+                purchase_units: [{
+                    amount: {
+                        value: '{{ session('total_price') ?? 100 }}'
+                    }
+                }]
+            });
+        },
+
+        onApprove: function(data, actions) {
+            return actions.order.capture().then(function(details) {
+                window.location.href = "{{ route('payment.success') }}";
+            });
+        },
+
+        onCancel: function (data) {
+            window.location.href = "{{ route('payment.cancel') }}";
+        }
+
+    }).render('#paypal-button-container');
+
+});
+</script>
 @endsection

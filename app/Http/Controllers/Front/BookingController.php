@@ -32,7 +32,7 @@ class BookingController extends Controller
        $room_id = $request->room_id;
 
 
-      // 43 Ajout au panier (session variable array à gauche qui contient la valeur à droite)
+      // 3 Ajout au panier (session variable array à gauche qui contient la valeur à droite)
       session()->push('cart_room_id', $room_id);
       session()->push('cart_checkin_date', $checkin_date);
       session()->push('cart_checkout_date', $checkout_date);
@@ -135,9 +135,124 @@ class BookingController extends Controller
         session()->put('billing_city', $request->billing_city);
         session()->put('billing_zip', $request->billing_zip);
 
-        // Calcul du total du panier
-        // $total_price = $this->calculateTotal();
+       
 
         return view('front.payment');
     }
+
+    /****************************** Payment Method Paypal *************************** */
+    public function paypal()
+    {
+         // Vérifier panier
+         if (!session()->has('cart_room_id')) {
+             return redirect()->route('cart')->with('error', 'Cart is empty');
+         }
+         
+         // Calcul du total réel du panier
+         $total_price = 0;
+         $cart_room_id = session()->get('cart_room_id', []);
+         $cart_checkin_date = session()->get('cart_checkin_date', []);
+         $cart_checkout_date = session()->get('cart_checkout_date', []);
+
+        foreach($cart_room_id as $i => $room_id){
+             $room = DB::table('rooms')->find($room_id);
+             if(!$room) continue;
+
+             $checkin = strtotime($cart_checkin_date[$i]);
+             $checkout = strtotime($cart_checkout_date[$i]);
+             $nights = max(1, ($checkout - $checkin)/86400);
+
+             $total_price += $room->price * $nights;
+        }
+
+        // Stocker le total réel dans la session pour PayPal
+        session()->put('total_price', $total_price);
+
+        return view('front.payment');
+    }
+
+
+
+
+    // ==================== PAYMENT SUCCESS ====================
+    public function paymentSuccess(Request $request)
+    {
+        $customer_id = Auth::guard('customer')->id();
+        $cart_room_id = session()->get('cart_room_id', []);
+        $cart_checkin_date = session()->get('cart_checkin_date', []);
+        $cart_checkout_date = session()->get('cart_checkout_date', []);
+        $cart_adult = session()->get('cart_adult', []);
+        $cart_children = session()->get('cart_children', []);
+        $total_price = session()->get('total_price', 0);
+
+        // Enregistre chaque réservation dans la base de données
+        foreach ($cart_room_id as $i => $room_id) {
+            Booking::create([
+                'customer_id' => $customer_id,
+                'room_id' => $room_id,
+                'checkin' => $cart_checkin_date[$i] ?? null,
+                'checkout' => $cart_checkout_date[$i] ?? null,
+                'adult' => $cart_adult[$i] ?? 1,
+                'children' => $cart_children[$i] ?? 0,
+                'total_price' => $total_price,
+                'payment_method' => 'PayPal',
+                'payment_status' => 'Paid',
+                'transaction_id' => $request->query('token') ?? null, // ID PayPal si dispo
+            ]);
+        }
+
+        // Vider le panier après paiement
+        session()->forget([
+            'cart_room_id',
+            'cart_checkin_date',
+            'cart_checkout_date',
+            'cart_adult',
+            'cart_children',
+            'total_price'
+        ]);
+
+        return redirect()->route('home')->with('success', 'Payment successful!');
+    }
+
+
+//    public function paymentSuccess()
+//    {
+//     // 🔥 ici future logique DB
+
+//     // Vider panier
+//     session()->forget('cart_room_id');
+//     session()->forget('cart_checkin_date');
+//     session()->forget('cart_checkout_date');
+
+//     return redirect()->route('home')->with('success', 'Payment successful!');
+//    }
+
+
+    public function paymentCancel()
+    {
+      return redirect()->route('cart')->with('error', 'Payment cancelled');
+    }
+
+
+//    private function calculateTotal()
+//    {
+//     $total = 0;
+
+//     $rooms = session('cart_room_id', []);
+
+//     foreach ($rooms as $key => $room_id) {
+//         $room = DB::table('rooms')->find($room_id);
+
+//         if (!$room) continue;
+
+//         $checkin = session('cart_checkin_date')[$key];
+//         $checkout = session('cart_checkout_date')[$key];
+
+//         $nights = (strtotime($checkout) - strtotime($checkin)) / 86400;
+
+//         $total += $room->price * $nights;
+//     }
+
+//       return $total;
+//    }
 }
