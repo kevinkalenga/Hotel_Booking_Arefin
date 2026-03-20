@@ -8,6 +8,8 @@ use Auth;
 use App\Models\Order;
 use Illuminate\Support\Str;
 use App\Models\OrderDetail;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\Websitemail;
 
 class BookingController extends Controller
 {
@@ -232,10 +234,28 @@ class BookingController extends Controller
                  'subtotal' => $subtotal,
              ]);
            }
+
+
+           // 4 Envoyer un email au client
+        $subject = 'Booking Confirmation - ' . $order->order_no;
+
+        $body = "Hi " . (session('billing_name') ?? 'Customer') . ",<br><br>";
+        $body .= "Thank you for your booking. Here are your order details:<br>";
+        $body .= "<ul>";
+        $body .= "<li>Order No: {$order->order_no}</li>";
+        $body .= "<li>Payment Method: {$order->payment_method}</li>";
+        $body .= "<li>Paid Amount: $" . number_format($order->paid_amount, 2) . "</li>";
+        $body .= "<li>Booking Date: " . $order->booking_date->format('d/m/Y') . "</li>";
+        $body .= "</ul><br>";
+        $body .= "We look forward to welcoming you!";
+
+        if(session('billing_email')){
+            Mail::to(session('billing_email'))->send(new Websitemail($subject, $body));
+        }
        
        
        
-        // 4️ Vider panier
+        //5 Vider panier
         session()->forget([
         'cart_room_id',
         'cart_checkin_date',
@@ -248,7 +268,8 @@ class BookingController extends Controller
     // Force Laravel à renvoyer JSON correct
       return response()->json([
         'success' => true,
-        'message' => 'Order saved successfully.',
+        'message' => 'Payment and order saved successfully!',
+        'redirect' => route('customer_home')
        
       ]);
     }
