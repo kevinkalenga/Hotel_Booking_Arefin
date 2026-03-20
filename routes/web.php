@@ -33,6 +33,7 @@ use App\Http\Controllers\Front\PrivacyController;
 use App\Http\Controllers\Front\ContactController;
 use App\Http\Controllers\Front\SubscriberController;
 use App\Http\Controllers\Front\RoomController;
+use App\Http\Controllers\Front\BookingController;
 
 /* ------------------------- Front--------------------- */
 
@@ -51,6 +52,8 @@ Route::post('/subscriber/send-email', [SubscriberController::class, 'send_email'
 Route::get('/subscriber/verify/{email}/{token}', [SubscriberController::class, 'verify'])->name('subscriber_verify');
 Route::get('/room', [RoomController::class, 'index'])->name('room');
 Route::get('/room/{id}', [RoomController::class, 'single_room'])->name('room_detail');
+Route::post('/booking/submit', [BookingController::class, 'cart_submit'])->name('cart_submit');
+Route::get('/cart', [BookingController::class, 'cart_view'])->name('cart');
 
 
 
