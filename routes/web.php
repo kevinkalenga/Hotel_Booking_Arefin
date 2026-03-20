@@ -58,7 +58,7 @@ Route::get('/cart/delete/{id}', [BookingController::class, 'cart_delete'])->name
 Route::get('/checkout', [BookingController::class, 'checkout'])->name('checkout');
 Route::post('/payment', [BookingController::class, 'payment'])->name('payment');
 Route::get('/payment/paypal', [BookingController::class, 'paypal'])->name('paypal');
-Route::get('/payment/success', [BookingController::class, 'paymentSuccess'])->name('payment.success');
+Route::post('/payment/success', [BookingController::class, 'paymentSuccess'])->name('payment.success');
 Route::get('/payment/cancel', [BookingController::class, 'paymentCancel'])->name('payment.cancel');
 
 

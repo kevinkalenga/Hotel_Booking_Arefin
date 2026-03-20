@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Front;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Auth;
+use App\Models\Order;
+use Illuminate\Support\Str;
 
 class BookingController extends Controller
 {
@@ -175,58 +177,39 @@ class BookingController extends Controller
 
 
     // ==================== PAYMENT SUCCESS ====================
+   
     public function paymentSuccess(Request $request)
     {
-        $customer_id = Auth::guard('customer')->id();
-        $cart_room_id = session()->get('cart_room_id', []);
-        $cart_checkin_date = session()->get('cart_checkin_date', []);
-        $cart_checkout_date = session()->get('cart_checkout_date', []);
-        $cart_adult = session()->get('cart_adult', []);
-        $cart_children = session()->get('cart_children', []);
-        $total_price = session()->get('total_price', 0);
+       $customer_id = Auth::guard('customer')->id();
+       $paid_amount = $request->paid_amount ?? session()->get('total_price', 0);
 
-        // Enregistre chaque réservation dans la base de données
-        foreach ($cart_room_id as $i => $room_id) {
-            Booking::create([
-                'customer_id' => $customer_id,
-                'room_id' => $room_id,
-                'checkin' => $cart_checkin_date[$i] ?? null,
-                'checkout' => $cart_checkout_date[$i] ?? null,
-                'adult' => $cart_adult[$i] ?? 1,
-                'children' => $cart_children[$i] ?? 0,
-                'total_price' => $total_price,
-                'payment_method' => 'PayPal',
-                'payment_status' => 'Paid',
-                'transaction_id' => $request->query('token') ?? null, // ID PayPal si dispo
-            ]);
-        }
+      Order::create([
+        'customer_id' => $customer_id,
+        'order_no' => 'ORD-' . strtoupper(Str::random(8)),
+        'transaction_id' => $request->transaction_id ?? null,
+        'payment_method' => 'PayPal',
+        'paid_amount' => $paid_amount,
+        'booking_date' => now(),
+        'status' => 'paid',
+       ]);
 
-        // Vider le panier après paiement
-        session()->forget([
-            'cart_room_id',
-            'cart_checkin_date',
-            'cart_checkout_date',
-            'cart_adult',
-            'cart_children',
-            'total_price'
-        ]);
+       session()->forget([
+        'cart_room_id',
+        'cart_checkin_date',
+        'cart_checkout_date',
+        'cart_adult',
+        'cart_children',
+        'total_price',
+      ]);
 
-        return redirect()->route('home')->with('success', 'Payment successful!');
+    // Force Laravel à renvoyer JSON correct
+      return response()->json([
+        'success' => true,
+        'message' => 'Order saved successfully.',
+        'redirect' => route('customer_home')
+      ], 200, ['Content-Type' => 'application/json']);
     }
-
-
-//    public function paymentSuccess()
-//    {
-//     // 🔥 ici future logique DB
-
-//     // Vider panier
-//     session()->forget('cart_room_id');
-//     session()->forget('cart_checkin_date');
-//     session()->forget('cart_checkout_date');
-
-//     return redirect()->route('home')->with('success', 'Payment successful!');
-//    }
-
+    
 
     public function paymentCancel()
     {
@@ -234,25 +217,5 @@ class BookingController extends Controller
     }
 
 
-//    private function calculateTotal()
-//    {
-//     $total = 0;
 
-//     $rooms = session('cart_room_id', []);
-
-//     foreach ($rooms as $key => $room_id) {
-//         $room = DB::table('rooms')->find($room_id);
-
-//         if (!$room) continue;
-
-//         $checkin = session('cart_checkin_date')[$key];
-//         $checkout = session('cart_checkout_date')[$key];
-
-//         $nights = (strtotime($checkout) - strtotime($checkin)) / 86400;
-
-//         $total += $room->price * $nights;
-//     }
-
-//       return $total;
-//    }
 }

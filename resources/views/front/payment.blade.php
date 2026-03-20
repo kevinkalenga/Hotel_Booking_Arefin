@@ -116,7 +116,6 @@
         </div>
     </div>
 </div>
-
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -134,7 +133,32 @@ document.addEventListener("DOMContentLoaded", function () {
 
         onApprove: function(data, actions) {
             return actions.order.capture().then(function(details) {
-                window.location.href = "{{ route('payment.success') }}";
+
+                // Important : retourner fetch pour que PayPal JS sache que c'est fini
+                return fetch("{{ route('payment.success') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                    },
+                    body: JSON.stringify({
+                        transaction_id: details.id,
+                        paid_amount: '{{ session('total_price') ?? 100 }}'
+                    })
+                })
+                .then(res => res.json())
+                .then(response => {
+                    if(response.success) {
+                        window.location.href = "{{ route('customer_home') }}";
+                    } else {
+                        alert("Payment was successful but saving order failed.");
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Payment succeeded but something went wrong.");
+                });
+
             });
         },
 
