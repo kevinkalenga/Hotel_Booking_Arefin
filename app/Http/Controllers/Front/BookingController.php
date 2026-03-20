@@ -98,4 +98,46 @@ class BookingController extends Controller
 
         return view('front.checkout');
     }
+
+
+    // ==================== PAYMENT PAGE ====================
+    public function payment(Request $request)
+    {
+        // Vérifie connexion
+        if (!Auth::guard('customer')->check()) {
+            return redirect()->route('cart')->with('error', 'You must login in order to checkout');
+        }
+
+        // Vérifie panier
+        if (!session()->has('cart_room_id') || empty(session('cart_room_id'))) {
+            return redirect()->route('cart')->with('error', 'There is no item in the cart');
+        }
+
+        // Valide les informations de facturation
+        $request->validate([
+            'billing_name' => 'required',
+            'billing_email' => 'required|email',
+            'billing_phone' => 'required',
+            'billing_country' => 'required',
+            'billing_address' => 'required',
+            'billing_state' => 'required',
+            'billing_city' => 'required',
+            'billing_zip' => 'required',
+        ]);
+
+        // Enregistre les informations en session pour le sauvegarde
+        session()->put('billing_name', $request->billing_name);
+        session()->put('billing_email', $request->billing_email);
+        session()->put('billing_phone', $request->billing_phone);
+        session()->put('billing_country', $request->billing_country);
+        session()->put('billing_address', $request->billing_address);
+        session()->put('billing_state', $request->billing_state);
+        session()->put('billing_city', $request->billing_city);
+        session()->put('billing_zip', $request->billing_zip);
+
+        // Calcul du total du panier
+        // $total_price = $this->calculateTotal();
+
+        return view('front.payment');
+    }
 }

@@ -17,7 +17,7 @@
         <div class="row">
             {{-- Billing Info --}}
             <div class="col-lg-8 col-md-6 checkout-left">
-                <form action="" method="post" class="form_checkout">
+                <form action="{{ route('payment') }}" method="post" class="form_checkout">
                     @csrf
                     <div class="billing-info">
                         <h4 class="mb_30">Billing Information</h4>
