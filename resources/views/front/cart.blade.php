@@ -119,7 +119,7 @@
                     </div>
 
                     <div class="checkout mb_20">
-                        <a href="#" class="btn btn-primary bg-website">Checkout</a>
+                        <a href="{{ route('checkout') }}" class="btn btn-primary bg-website">Checkout</a>
                     </div>
                 @else
                     <div class="text-danger mb-30">

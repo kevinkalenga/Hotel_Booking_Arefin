@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Auth;
 
 class BookingController extends Controller
 {
@@ -79,5 +80,22 @@ class BookingController extends Controller
         }
 
         return redirect()->back()->with('success', 'Cart item deleted successfully');
+    }
+
+
+    // ==================== CHECKOUT ====================
+    public function checkout()
+    {
+        // Vérifie si le client est connecté
+        if (!Auth::guard('customer')->check()) {
+            return redirect()->route('cart')->with('error', 'You must login in order to checkout');
+        }
+
+        // Vérifie que le panier n'est pas vide
+        if (!session()->has('cart_room_id') || empty(session('cart_room_id'))) {
+            return redirect()->route('cart')->with('error', 'There is no item in the cart');
+        }
+
+        return view('front.checkout');
     }
 }
