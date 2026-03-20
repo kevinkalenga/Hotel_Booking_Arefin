@@ -33,7 +33,9 @@
     
                         <div class="stripe mt_20">
                             <h4>Pay with Stripe</h4>
-                            <p>Write necessary code here</p>
+                            <div id="card-element" style="padding:10px; border:1px solid #ccc; border-radius:5px;"></div>
+                             <button style="margin-top:10px;" id="stripe-button">Pay With Stripe</button>
+                              <div id="card-errors" role="alert" style="color:red; margin-top:10px;"></div>
                         </div>
     
             </div>
@@ -168,6 +170,91 @@ document.addEventListener("DOMContentLoaded", function () {
 
     }).render('#paypal-button-container');
 
+});
+</script>
+
+   <script src="https://js.stripe.com/v3/"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    const stripe = Stripe('{{ config('services.stripe.key') }}');
+    const elements = stripe.elements();
+    const card = elements.create('card', {hidePostalCode: true});
+    card.mount('#card-element');
+
+    const stripeBtn = document.getElementById('stripe-button');
+    const cardErrors = document.getElementById('card-errors');
+
+    stripeBtn.addEventListener('click', async function(e) {
+        e.preventDefault();
+        cardErrors.textContent = '';
+        stripeBtn.disabled = true;
+
+        // 1️⃣ Crée le PaymentIntent
+        let res, data;
+        try {
+            res = await fetch('{{ route('stripe.createIntent') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({})
+            });
+            data = await res.json();
+        } catch(err) {
+            cardErrors.textContent = 'Error creating payment intent.';
+            stripeBtn.disabled = false;
+            return;
+        }
+
+        if(!data.success){
+            cardErrors.textContent = data.message || 'Failed to create payment intent.';
+            stripeBtn.disabled = false;
+            return;
+        }
+
+        // 2️⃣ Confirme le paiement
+        const {error, paymentIntent} = await stripe.confirmCardPayment(data.clientSecret, {
+            payment_method: {
+                card: card,
+                billing_details: {
+                    name: "{{ session('billing_name') }}",
+                    email: "{{ session('billing_email') }}"
+                }
+            }
+        });
+
+        if(error){
+            cardErrors.textContent = error.message;
+            stripeBtn.disabled = false;
+            return;
+        }
+
+        if(paymentIntent.status === 'succeeded'){
+            // 3️⃣ Notifie Laravel
+            let notifyResponse;
+            try {
+                const notify = await fetch('{{ route('stripe.success') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ transaction_id: paymentIntent.id })
+                });
+                notifyResponse = await notify.json();
+            } catch(err) {
+                cardErrors.textContent = 'Payment succeeded but saving order failed.';
+                return;
+            }
+
+            if(notifyResponse.success){
+                window.location.href = notifyResponse.redirect;
+            } else {
+                cardErrors.textContent = 'Payment succeeded but saving order failed.';
+            }
+        }
+    });
 });
 </script>
 @endsection

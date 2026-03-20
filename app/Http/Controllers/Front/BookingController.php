@@ -10,6 +10,9 @@ use Illuminate\Support\Str;
 use App\Models\OrderDetail;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\Websitemail;
+use Stripe\Stripe;
+use Stripe\PaymentIntent;
+use DB;
 
 class BookingController extends Controller
 {
@@ -141,7 +144,27 @@ class BookingController extends Controller
         session()->put('billing_zip', $request->billing_zip);
 
        
+        // Ajout de session
+          $total_price = 0;
+          $cart_room_id = session()->get('cart_room_id', []);
+          $cart_checkin_date = session()->get('cart_checkin_date', []);
+          $cart_checkout_date = session()->get('cart_checkout_date', []);
 
+       foreach($cart_room_id as $i => $room_id){
+            $room = DB::table('rooms')->find($room_id);
+            if(!$room) continue;
+
+             $checkin = strtotime($cart_checkin_date[$i]);
+             $checkout = strtotime($cart_checkout_date[$i]);
+             $nights = max(1, ($checkout - $checkin)/86400);
+
+              $total_price += $room->price * $nights;
+         }
+
+        session(['total_price' => $total_price]);
+        
+        
+        
         return view('front.payment');
     }
 
@@ -281,5 +304,144 @@ class BookingController extends Controller
     }
 
 
+   
+      /****************************** Payment Method Stripe *************************** */
 
+    
+
+      // Crée le PaymentIntent Stripe
+       public function stripeCreateIntent(Request $request)
+{
+    \Log::info('Stripe CreateIntent called'); // trace pour debug
+    $total_price = session()->get('total_price', 0);
+    \Log::info('Total price from session: ' . $total_price);
+
+    if ($total_price < 0.50) {
+        $total_price = 0.50; // force minimum pour Stripe
+    }
+
+    try {
+        \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+
+        $intent = \Stripe\PaymentIntent::create([
+            'amount' => intval($total_price * 100),
+            'currency' => 'usd',
+            'metadata' => [
+                'customer_id' => Auth::guard('customer')->id() ?? 0,
+            ],
+        ]);
+
+        \Log::info('PaymentIntent created: ' . $intent->id);
+
+        return response()->json([
+            'success' => true,
+            'clientSecret' => $intent->client_secret,
+        ]);
+    } catch (\Exception $e) {
+        \Log::error('Stripe CreateIntent Error: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Stripe error: ' . $e->getMessage()
+        ]);
+    }
 }
+
+    
+    // Payment Stripe réussi
+    public function stripeSuccess(Request $request)
+    {
+        $transaction_id = $request->transaction_id;
+        if(!$transaction_id){
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaction ID missing.'
+            ]);
+        }
+
+        $customer_id = Auth::guard('customer')->id();
+        $cart_room_id = session()->get('cart_room_id', []);
+        $cart_checkin_date = session()->get('cart_checkin_date', []);
+        $cart_checkout_date = session()->get('cart_checkout_date', []);
+        $cart_adult = session()->get('cart_adult', []);
+        $cart_children = session()->get('cart_children', []);
+        $total_price = session()->get('total_price', 0);
+
+        if(empty($cart_room_id)){
+            return response()->json([
+                'success' => false,
+                'message' => 'Cart is empty.'
+            ]);
+        }
+
+        // 1️⃣ Créer l'ordre
+        $order = Order::create([
+            'customer_id' => $customer_id,
+            'order_no' => 'ORD-' . strtoupper(Str::random(8)),
+            'transaction_id' => $transaction_id,
+            'payment_method' => 'Stripe',
+            'paid_amount' => $total_price,
+            'booking_date' => now(),
+            'status' => 'Completed',
+        ]);
+
+        // 2️⃣ Enregistrer chaque chambre
+        foreach($cart_room_id as $i => $room_id){
+            $room = DB::table('rooms')->find($room_id);
+            if(!$room) continue;
+
+            $checkin_parts = explode('/', $cart_checkin_date[$i]);
+            $checkout_parts = explode('/', $cart_checkout_date[$i]);
+
+            $checkin = date('Y-m-d', strtotime($checkin_parts[2].'-'.$checkin_parts[1].'-'.$checkin_parts[0]));
+            $checkout = date('Y-m-d', strtotime($checkout_parts[2].'-'.$checkout_parts[1].'-'.$checkout_parts[0]));
+
+            $nights = max(1, (strtotime($checkout) - strtotime($checkin))/86400);
+            $subtotal = $room->price * $nights;
+
+            OrderDetail::create([
+                'order_id' => $order->id,
+                'room_id' => $room_id,
+                'checkin_date' => $checkin,
+                'checkout_date' => $checkout,
+                'adult' => $cart_adult[$i] ?? 1,
+                'children' => $cart_children[$i] ?? 0,
+                'subtotal' => $subtotal,
+            ]);
+        }
+
+        // 3️⃣ Envoyer email au client
+        $customer_email = session()->get('billing_email') ?? Auth::guard('customer')->user()->email ?? null;
+        if($customer_email){
+            $subject = 'Booking Confirmed - ' . $order->order_no;
+            $body = "Hi " . (session('billing_name') ?? 'Customer') . ",<br><br>";
+            $body .= "Thank you for your booking. Here are your order details:<br>";
+            $body .= "<ul>";
+            $body .= "<li>Order No: {$order->order_no}</li>";
+            $body .= "<li>Payment Method: {$order->payment_method}</li>";
+            $body .= "<li>Paid Amount: $" . number_format($order->paid_amount, 2) . "</li>";
+            $body .= "<li>Booking Date: " . $order->booking_date->format('d/m/Y') . "</li>";
+            $body .= "</ul><br>";
+            $body .= "We look forward to welcoming you!";
+
+            Mail::to($customer_email)->send(new Websitemail($subject, $body));
+        }
+
+        // 4️⃣ Vider panier
+        session()->forget(['cart_room_id','cart_checkin_date','cart_checkout_date','cart_adult','cart_children','total_price']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment successful and order saved!',
+            'redirect' => route('customer_home')
+        ]);
+    }
+}
+    
+    
+    
+    
+    
+    
+
+
+

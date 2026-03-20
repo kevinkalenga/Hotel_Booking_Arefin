@@ -60,6 +60,8 @@ Route::post('/payment', [BookingController::class, 'payment'])->name('payment');
 Route::get('/payment/paypal', [BookingController::class, 'paypal'])->name('paypal');
 Route::post('/payment/success', [BookingController::class, 'paymentSuccess'])->name('payment.success');
 Route::get('/payment/cancel', [BookingController::class, 'paymentCancel'])->name('payment.cancel');
+Route::post('/payment/stripe/create-intent', [BookingController::class, 'stripeCreateIntent'])->name('stripe.createIntent');
+Route::post('/payment/stripe/success', [BookingController::class, 'stripeSuccess'])->name('stripe.success');
 
 
 
