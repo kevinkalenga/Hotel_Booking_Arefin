@@ -10,6 +10,7 @@
                 <ul class="sidebar-menu">
 
                     <li class="{{ Request::is('customer/home') ? 'active': '' }}"><a class="nav-link" href="{{route('customer_home')}}"><i class="fa fa-hand-o-right"></i> <span>Dashboard</span></a></li>
+                     <li class="{{ Request::is('customer/order/*')  ? 'active': '' }}"><a class="nav-link" href="{{route('customer_order_view')}}"><i class="fa fa-hand-o-right"></i> Order</a></li>
 
                    
 

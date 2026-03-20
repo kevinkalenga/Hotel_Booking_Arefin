@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\AdminRoomController;
 use App\Http\Controllers\Customer\CustomerHomeController;
 use App\Http\Controllers\Customer\CustomerAuthController;
 use App\Http\Controllers\Customer\CustomerProfileController;
+use App\Http\Controllers\Customer\CustomerOrderController;
 
 
 use App\Http\Controllers\Front\HomeController;
@@ -273,4 +274,5 @@ Route::group(['middleware' =>['customer:customer']], function(){
     Route::get('/customer/home', [CustomerHomeController::class, 'index'])->name('customer_home');
     Route::get('/customer/edit-profile', [CustomerProfileController::class, 'index'])->name('customer_profile');
     Route::post('/customer/edit-profile-submit', [CustomerProfileController::class, 'profile_submit'])->name('customer_profile_submit');
+    Route::get('/customer/order/view', [CustomerOrderController::class, 'index'])->name('customer_order_view');
 });
