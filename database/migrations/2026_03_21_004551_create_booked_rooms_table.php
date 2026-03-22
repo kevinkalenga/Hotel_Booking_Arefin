@@ -13,10 +13,13 @@ return new class extends Migration
     {
         Schema::create('booked_rooms', function (Blueprint $table) {
             $table->id();
-            $table->text('booking_date');
+            $table->date('booking_date');
             $table->text('order_no');
             $table->integer('room_id');
             $table->timestamps();
+
+             //  Contrainte unique pour éviter le surbooking
+            $table->unique(['room_id', 'booking_date']);
         });
     }
 

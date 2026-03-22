@@ -2,6 +2,8 @@
 
 @section('main_content')
 <script src="https://www.paypal.com/sdk/js?client-id={{ config('services.paypal.client_id') }}&currency=USD"></script>
+<script src="https://js.stripe.com/v3/"></script>
+
 <div class="page-top">
     <div class="bg"></div>
     <div class="container">
@@ -16,28 +18,27 @@
 <div class="page-content">
     <div class="container">
         <div class="row">
-                  {{-- Payment Method --}}
-            <div class="col-lg-4 col-md-4 checkout-left mb_30">
-                        
-                        <h4>Make Payment</h4>
-                        <select name="payment_method" class="form-control select2" id="paymentMethodChange" autocomplete="off">
-                            <option value="">Select Payment Method</option>
-                            <option value="PayPal">PayPal</option>
-                            <option value="Stripe">Stripe</option>
-                        </select>
 
-                        <div class="paypal mt_20">
-                            <h4>Pay with PayPal</h4>
-                            <div id="paypal-button-container"></div>
-                        </div>
-    
-                        <div class="stripe mt_20">
-                            <h4>Pay with Stripe</h4>
-                            <div id="card-element" style="padding:10px; border:1px solid #ccc; border-radius:5px;"></div>
-                             <button style="margin-top:10px;" id="stripe-button">Pay With Stripe</button>
-                              <div id="card-errors" role="alert" style="color:red; margin-top:10px;"></div>
-                        </div>
-    
+            {{-- Payment Method --}}
+            <div class="col-lg-4 col-md-4 checkout-left mb_30">
+                <h4>Make Payment</h4>
+                <select name="payment_method" class="form-control select2" id="paymentMethodChange" autocomplete="off">
+                    <option value="">Select Payment Method</option>
+                    <option value="PayPal">PayPal</option>
+                    <option value="Stripe">Stripe</option>
+                </select>
+
+                <div class="paypal mt_20">
+                    <h4>Pay with PayPal</h4>
+                    <div id="paypal-button-container"></div>
+                </div>
+
+                <div class="stripe mt_20">
+                    <h4>Pay with Stripe</h4>
+                    <div id="card-element" style="padding:10px; border:1px solid #ccc; border-radius:5px;"></div>
+                    <button type="button" style="margin-top:10px;" id="stripe-button">Pay With Stripe</button>
+                    <div id="card-errors" role="alert" style="color:red; margin-top:10px;"></div>
+                </div>
             </div>
 
             {{-- Billing details --}}
@@ -55,7 +56,7 @@
                 </div>
             </div>
 
-            {{-- Cart Summary + Payment --}}
+            {{-- Cart Summary --}}
             <div class="col-lg-4 col-md-4 checkout-right">
                 <div class="inner">
                     <h4 class="mb_10">Cart Details</h4>
@@ -63,12 +64,12 @@
                         <table class="table">
                             <tbody>
                                 @php
+                                    use Carbon\Carbon;
                                     $cart_room_id = session()->get('cart_room_id', []);
                                     $cart_checkin_date = session()->get('cart_checkin_date', []);
                                     $cart_checkout_date = session()->get('cart_checkout_date', []);
                                     $cart_adult = session()->get('cart_adult', []);
                                     $cart_children = session()->get('cart_children', []);
-
                                     $total_price = 0;
                                 @endphp
 
@@ -76,25 +77,15 @@
                                     @php
                                         $room = \App\Models\Room::find($room_id);
                                         if (!$room) continue;
-
-                                        $checkin_str = $cart_checkin_date[$i] ?? null;
-                                        $checkout_str = $cart_checkout_date[$i] ?? null;
-                                        $nights = 0;
-                                        $subtotal = 0;
-
-                                        if ($checkin_str && $checkout_str) {
-                                             $checkin = strtotime($checkin_str);
-                                            $checkout = strtotime($checkout_str);
-
-                                            $nights = max(1, ceil(($checkout - $checkin)/86400));
-
-                                            $subtotal = $room->price * $nights;
-                                            $total_price += $subtotal;
-                                        }
+                                        $checkin = Carbon::parse($cart_checkin_date[$i]);
+                                        $checkout = Carbon::parse($cart_checkout_date[$i]);
+                                        $nights = max(1, $checkin->diffInDays($checkout));
+                                        $subtotal = $room->price * $nights;
+                                        $total_price += $subtotal;
                                     @endphp
                                     <tr>
                                         <td>{{ $room->name }}</td>
-                                        <td>{{ $checkin_str }} - {{ $checkout_str }}</td>
+                                        <td>{{ $cart_checkin_date[$i] }} - {{ $cart_checkout_date[$i] }}</td>
                                         <td>Adult: {{ $cart_adult[$i] ?? 1 }}<br>Children: {{ $cart_children[$i] ?? 0 }}</td>
                                         <td>${{ number_format($subtotal, 2) }}</td>
                                     </tr>
@@ -107,70 +98,55 @@
                             </tbody>
                         </table>
                     </div>
-
-                   
                 </div>
             </div>
 
         </div>
     </div>
 </div>
+
 <script>
+ const totalPrice = {{ number_format($total_price ?? 0, 2, '.', '') }};
 document.addEventListener("DOMContentLoaded", function () {
-
     paypal.Buttons({
-
         createOrder: function(data, actions) {
             return actions.order.create({
-                purchase_units: [{
-                    amount: {
-                        value: '{{ session('total_price') ?? 100 }}'
-                    }
-                }]
+                purchase_units: [{ amount: { value: totalPrice } }]
             });
         },
-
         onApprove: function(data, actions) {
             return actions.order.capture().then(function(details) {
-
-                // Important : retourner fetch pour que PayPal JS sache que c'est fini
                 return fetch("{{ route('payment.success') }}", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                         "X-CSRF-TOKEN": "{{ csrf_token() }}"
                     },
-                    body: JSON.stringify({
-                        transaction_id: details.id,
-                        paid_amount: '{{ session('total_price') ?? 100 }}'
-                    })
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ transaction_id: details.id, paid_amount: totalPrice })
                 })
                 .then(res => res.json())
                 .then(response => {
-                    if(response.success) {
-                        window.location.href = "{{ route('customer_home') }}";
+                    if(response.success){
+                        window.location.href = response.redirect;
                     } else {
-                        alert("Payment was successful but saving order failed.");
+                        // Affiche le message friendly envoyé par le backend
+                        alert(response.message);
                     }
                 })
                 .catch(err => {
                     console.error(err);
-                    alert("Payment succeeded but something went wrong.");
+                    alert("Payment succeeded but something went wrong. Please review your cart.");
                 });
-
             });
         },
-
-        onCancel: function (data) {
+        onCancel: function() {
             window.location.href = "{{ route('payment.cancel') }}";
         }
-
     }).render('#paypal-button-container');
-
 });
 </script>
 
-   <script src="https://js.stripe.com/v3/"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async function() {
     const stripe = Stripe('{{ config('services.stripe.key') }}');
@@ -186,15 +162,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         cardErrors.textContent = '';
         stripeBtn.disabled = true;
 
-        // 1️⃣ Crée le PaymentIntent
-        let res, data;
+        let data;
         try {
-            res = await fetch('{{ route('stripe.createIntent') }}', {
+            const res = await fetch('{{ route("stripe.createIntent") }}', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}' 
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify({})
             });
             data = await res.json();
@@ -210,13 +186,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             return;
         }
 
-        // 2️⃣ Confirme le paiement
         const {error, paymentIntent} = await stripe.confirmCardPayment(data.clientSecret, {
             payment_method: {
                 card: card,
                 billing_details: {
-                    name: "{{ session('billing_name') }}",
-                    email: "{{ session('billing_email') }}"
+                    name: "{{ session('billing_name') ?? 'Customer' }}",
+                    email: "{{ session('billing_email') ?? 'no-reply@example.com' }}"
                 }
             }
         });
@@ -228,30 +203,30 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
 
         if(paymentIntent.status === 'succeeded'){
-            // 3️⃣ Notifie Laravel
-            let notifyResponse;
             try {
-                const notify = await fetch('{{ route('stripe.success') }}', {
+                const notify = await fetch('{{ route("stripe.success") }}', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}' 
                     },
+                    credentials: 'same-origin',
                     body: JSON.stringify({ transaction_id: paymentIntent.id })
                 });
-                notifyResponse = await notify.json();
-            } catch(err) {
-                cardErrors.textContent = 'Payment succeeded but saving order failed.';
-                return;
-            }
+                const notifyResponse = await notify.json();
 
-            if(notifyResponse.success){
-                window.location.href = notifyResponse.redirect;
-            } else {
-                cardErrors.textContent = 'Payment succeeded but saving order failed.';
+                if(notifyResponse.success){
+                    window.location.href = notifyResponse.redirect;
+                } else {
+                    // Affiche le message friendly du backend
+                    cardErrors.textContent = notifyResponse.message;
+                }
+            } catch(err) {
+                cardErrors.textContent = 'Payment succeeded but saving order failed. Please review your cart.';
             }
         }
     });
 });
 </script>
+
 @endsection

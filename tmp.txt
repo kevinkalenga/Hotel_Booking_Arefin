@@ -1,0 +1,993 @@
+<?php
+
+namespace App\Http\Controllers\Front;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Auth;
+use App\Models\Order;
+use App\Models\Room;
+use Illuminate\Support\Str;
+use App\Models\OrderDetail;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\Websitemail;
+use Stripe\Stripe;
+use Stripe\PaymentIntent;
+use DB;
+use Carbon\Carbon;
+
+class BookingController extends Controller
+{
+    // ==================== CART ====================
+    // Ajouter une chambre au panier
+  
+    public function cart_submit(Request $request)
+    {
+       $request->validate([
+           'room_id' => 'required|integer',
+           'checkin_checkout' => 'required',
+           'adult' => 'required|integer|min:1',
+       ]);
+
+       $dates = explode(' - ', $request->checkin_checkout);
+
+       if (count($dates) != 2) {
+          return redirect()->back()->with('error', 'Invalid date range format.');
+        }
+
+        //  SAFE parsing
+        $checkin = \Carbon\Carbon::createFromFormat('d/m/Y', trim($dates[0]));
+        $checkout = \Carbon\Carbon::createFromFormat('d/m/Y', trim($dates[1]));
+
+        if ($checkout->lessThanOrEqualTo($checkin)) {
+          return redirect()->back()->with('error', 'Checkout must be after checkin');
+        }
+
+        $checkin_date = $checkin->format('Y-m-d');
+        $checkout_date = $checkout->format('Y-m-d');
+
+        session()->push('cart_room_id', $request->room_id);
+        session()->push('cart_checkin_date', $checkin_date);
+        session()->push('cart_checkout_date', $checkout_date);
+        session()->push('cart_adult', $request->adult);
+        session()->push('cart_children', $request->children);
+
+        return redirect()->back()->with('success', 'Room added to cart successfully!');
+    }
+    
+
+   // Affichage du panier
+   public function cart_view()
+   {
+      return view('front.cart');
+   }
+
+
+   // Supprimer une chambre du panier
+    public function cart_delete($id)
+    {
+        $arr_cart_room_id = session()->get('cart_room_id', []);
+        $arr_cart_checkin_date = session()->get('cart_checkin_date', []);
+        $arr_cart_checkout_date = session()->get('cart_checkout_date', []);
+        $arr_cart_adult = session()->get('cart_adult', []);
+        $arr_cart_children = session()->get('cart_children', []);
+
+        if (empty($arr_cart_room_id)) {
+            return redirect()->back()->with('error', 'No items found in cart.');
+        }
+
+        // Vide le panier pour reconstruire sans l'élément supprimé
+        session()->forget([
+            'cart_room_id', 'cart_checkin_date', 'cart_checkout_date',
+            'cart_adult', 'cart_children'
+        ]);
+
+        for ($i = 0; $i < count($arr_cart_room_id); $i++) {
+            if ($arr_cart_room_id[$i] != $id) {
+                session()->push('cart_room_id', $arr_cart_room_id[$i]);
+                session()->push('cart_checkin_date', $arr_cart_checkin_date[$i]);
+                session()->push('cart_checkout_date', $arr_cart_checkout_date[$i]);
+                session()->push('cart_adult', $arr_cart_adult[$i]);
+                session()->push('cart_children', $arr_cart_children[$i]);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Cart item deleted successfully');
+    }
+
+
+    // ==================== CHECKOUT ====================
+  
+
+
+    public function checkout()
+   {
+    // 1️⃣ Vérifie si le client est connecté
+    if (!Auth::guard('customer')->check()) {
+        return redirect()->route('cart')->with('error', 'You must login in order to checkout');
+    }
+
+    // 2️⃣ Vérifie que le panier n'est pas vide
+    if (!session()->has('cart_room_id') || empty(session('cart_room_id'))) {
+        return redirect()->route('cart')->with('error', 'There is no item in the cart');
+    }
+
+    // 3️⃣ Calcul du total seulement après ces vérifications
+    $total_price = $this->calculateTotal();
+
+    // 4️⃣ Vérifie le minimum
+    if ($total_price < 0.50) {
+        return redirect()->back()->with('error', 'Minimum payment is $0.50');
+    }
+
+    // 5️⃣ Test de disponibilité
+    $cart_room_id = session()->get('cart_room_id', []);
+    $cart_checkin_date = session()->get('cart_checkin_date', []);
+    $cart_checkout_date = session()->get('cart_checkout_date', []);
+
+    foreach ($cart_room_id as $i => $room_id) {
+        $start = Carbon::parse($cart_checkin_date[$i]);
+        $end = Carbon::parse($cart_checkout_date[$i]);
+
+        while ($start->lt($end)) {
+            $exists = DB::table('booked_rooms')
+                ->where('room_id', $room_id)
+                ->where('booking_date', $start->format('Y-m-d'))
+                ->exists();
+
+            if ($exists) {
+                return redirect()->route('cart')
+                    ->with('error', 'Room not available on '.$start->format('d/m/Y'));
+            }
+
+            $start->addDay();
+        }
+    }
+
+    return view('front.checkout', compact('total_price'));
+  }
+
+
+    // ==================== PAYMENT PAGE ====================
+    public function payment(Request $request)
+    {
+        // Vérifie connexion
+        if (!Auth::guard('customer')->check()) {
+            return redirect()->route('cart')->with('error', 'You must login in order to checkout');
+        }
+
+        // Vérifie panier
+        if (!session()->has('cart_room_id') || empty(session('cart_room_id'))) {
+            return redirect()->route('cart')->with('error', 'There is no item in the cart');
+        }
+
+        // Valide les informations de facturation
+        $request->validate([
+            'billing_name' => 'required',
+            'billing_email' => 'required|email',
+            'billing_phone' => 'required',
+            'billing_country' => 'required',
+            'billing_address' => 'required',
+            'billing_state' => 'required',
+            'billing_city' => 'required',
+            'billing_zip' => 'required',
+        ]);
+
+        // Enregistre les informations en session pour le sauvegarde
+        session()->put('billing_name', $request->billing_name);
+        session()->put('billing_email', $request->billing_email);
+        session()->put('billing_phone', $request->billing_phone);
+        session()->put('billing_country', $request->billing_country);
+        session()->put('billing_address', $request->billing_address);
+        session()->put('billing_state', $request->billing_state);
+        session()->put('billing_city', $request->billing_city);
+        session()->put('billing_zip', $request->billing_zip);
+
+       
+        // Ajout de session
+          $total_price = 0;
+          $cart_room_id = session()->get('cart_room_id', []);
+          $cart_checkin_date = session()->get('cart_checkin_date', []);
+          $cart_checkout_date = session()->get('cart_checkout_date', []);
+
+       foreach($cart_room_id as $i => $room_id){
+            $room = Room::find($room_id);
+            if(!$room) continue;
+
+            //  $checkin = strtotime($cart_checkin_date[$i]);
+            //  $checkout = strtotime($cart_checkout_date[$i]);
+             $checkin = Carbon::parse($cart_checkin_date[$i]);
+              $checkout = Carbon::parse($cart_checkout_date[$i]);
+            //  $nights = max(1, ($checkout - $checkin)/86400);
+            $nights = max(1, $checkin->diffInDays($checkout));
+
+              $total_price += $room->price * $nights;
+         }
+
+        session(['total_price' => $total_price]);
+        
+        
+        
+        return view('front.payment');
+    }
+
+    /****************************** Payment Method Paypal *************************** */
+    public function paypal()
+    {
+         // Vérifier panier
+         if (!session()->has('cart_room_id')) {
+             return redirect()->route('cart')->with('error', 'Cart is empty');
+         }
+         
+         // Calcul du total réel du panier
+         $total_price = 0;
+         $cart_room_id = session()->get('cart_room_id', []);
+         $cart_checkin_date = session()->get('cart_checkin_date', []);
+         $cart_checkout_date = session()->get('cart_checkout_date', []);
+
+        foreach($cart_room_id as $i => $room_id){
+             $room = Room::find($room_id);
+             if(!$room) continue;
+
+            //  $checkin = strtotime($cart_checkin_date[$i]);
+            //  $checkout = strtotime($cart_checkout_date[$i]);
+            $checkin = Carbon::parse($cart_checkin_date[$i]);
+            $checkout = Carbon::parse($cart_checkout_date[$i]);
+            //  $nights = max(1, ($checkout - $checkin)/86400);
+            $nights = max(1, $checkin->diffInDays($checkout));
+
+             $total_price += $room->price * $nights;
+        }
+
+        // Stocker le total réel dans la session pour PayPal
+        session()->put('total_price', $total_price);
+
+        return view('front.payment');
+    }
+
+
+
+
+    // ==================== PAYMENT SUCCESS ====================
+   
+    public function paymentSuccess(Request $request)
+    {
+        if(!$request->transaction_id){
+              return response()->json([
+                  'success' => false,
+                  'message' => 'Transaction ID missing'
+              ]);
+        }
+    
+      // Client connecté
+       $customer_id = Auth::guard('customer')->id();
+        // Montant payé
+        $paid_amount = floatval($request->paid_amount ?? session()->get('total_price', 0));
+
+            if($paid_amount <= 0){
+              return response()->json([
+                  'success' => false,
+                  'message' => 'Invalid paid amount'
+              ]);
+            }
+        // 1 Créer la commande
+       $order = Order::create([
+        'customer_id' => $customer_id,
+        'order_no' => 'ORD-' . strtoupper(Str::random(8)),
+        'transaction_id' => $request->transaction_id ?? null,
+        'payment_method' => 'PayPal',
+        'paid_amount' => $paid_amount,
+        'booking_date' => now(),
+        'status' => 'Completed',
+       ]);
+
+        // 2️ Récupérer panier
+        $cart_room_id = session()->get('cart_room_id', []);
+        $cart_checkin_date = session()->get('cart_checkin_date', []);
+        $cart_checkout_date = session()->get('cart_checkout_date', []);
+        $cart_adult = session()->get('cart_adult', []);
+        $cart_children = session()->get('cart_children', []);
+
+       
+        // 3️ Enregistrer chaque chambre
+           foreach($cart_room_id as $i => $room_id){
+
+             $room = Room::find($room_id);
+             if(!$room) continue;
+
+             //  convertir d'abord les dates
+            //    $checkin = strtotime($cart_checkin_date[$i]);
+            //    $checkout = strtotime($cart_checkout_date[$i]);
+            $checkin = Carbon::parse($cart_checkin_date[$i]);
+            $checkout = Carbon::parse($cart_checkout_date[$i]);
+
+             //  ensuite calcul
+            //  $nights = max(1, ($checkout - $checkin) / 86400);
+            $nights = max(1, $checkin->diffInDays($checkout));
+
+            $subtotal = $room->price * $nights;
+
+             OrderDetail::create([
+                 'order_id' => $order->id,
+                 'room_id' => $room_id,
+                 'checkin_date' => $checkin->format('Y-m-d'),
+                 'checkout_date' =>  $checkout->format('Y-m-d'),
+                 'adult' => $cart_adult[$i] ?? 1,
+                 'children' => $cart_children[$i] ?? 0,
+                 'subtotal' => $subtotal,
+             ]);
+
+               // 2️ booked_rooms (IMPORTANT => test)
+                $start = Carbon::parse($checkin);
+                $end = Carbon::parse($checkout);
+
+                while ($start->lt($end)) {
+
+                    DB::table('booked_rooms')->insert([
+                        'room_id' => $room_id,
+                        'order_id' => $order->id,
+                        'booking_date' => $start->format('Y-m-d'),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                    $start->addDay();
+                }
+           }
+
+
+           // 4 Envoyer un email au client
+        $subject = 'Booking Confirmation - ' . $order->order_no;
+
+        $body = "Hi " . (session('billing_name') ?? 'Customer') . ",<br><br>";
+        $body .= "Thank you for your booking. Here are your order details:<br>";
+        $body .= "<ul>";
+        $body .= "<li>Order No: {$order->order_no}</li>";
+        $body .= "<li>Payment Method: {$order->payment_method}</li>";
+        $body .= "<li>Paid Amount: $" . number_format($order->paid_amount, 2) . "</li>";
+        $body .= "<li>Booking Date: " . $order->booking_date->format('d/m/Y') . "</li>";
+        $body .= "</ul><br>";
+        $body .= "We look forward to welcoming you!";
+
+         try {
+            if(session('billing_email')){
+                Mail::to(session('billing_email'))->send(new Websitemail($subject, $body));
+            }
+        } catch (\Exception $e) {
+          \Log::error('Mail error: '.$e->getMessage());
+        }
+       
+       
+       
+        //5 Vider panier
+        session()->forget([
+        'cart_room_id',
+        'cart_checkin_date',
+        'cart_checkout_date',
+        'cart_adult',
+        'cart_children',
+        'total_price',
+      ]);
+
+       
+      
+
+    
+    
+      // Force Laravel à renvoyer JSON correct
+      return response()->json([
+        'success' => true,
+        'message' => 'Payment and order saved successfully!',
+        'redirect' => route('customer_home')
+       
+      ]);
+    }
+    
+
+    public function paymentCancel()
+    {
+      return redirect()->route('cart')->with('error', 'Payment cancelled');
+    }
+
+
+   
+      /****************************** Payment Method Stripe *************************** */
+
+    
+
+      // Crée le PaymentIntent Stripe
+       public function stripeCreateIntent(Request $request)
+{
+    \Log::info('Stripe CreateIntent called'); // trace pour debug
+    $total_price = $this->calculateTotal();
+    session(['total_price' => $total_price]);
+    \Log::info('Total price from session: ' . $total_price);
+     
+       if ($total_price < 0.50) {
+             return response()->json([
+                'success' => false,
+                'message' => 'Minimum amount is $0.50'
+            ]);
+        }
+
+    try {
+        \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+
+        $intent = \Stripe\PaymentIntent::create([
+            'amount' => intval($total_price * 100),
+            'currency' => 'usd',
+            'metadata' => [
+                'customer_id' => Auth::guard('customer')->id() ?? 0,
+            ],
+        ]);
+
+        \Log::info('PaymentIntent created: ' . $intent->id);
+
+        return response()->json([
+            'success' => true,
+            'clientSecret' => $intent->client_secret,
+        ]);
+    } catch (\Exception $e) {
+        \Log::error('Stripe CreateIntent Error: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Stripe error: ' . $e->getMessage()
+        ]);
+    }
+}
+
+    
+    // Payment Stripe réussi
+    public function stripeSuccess(Request $request)
+    {
+        $transaction_id = $request->transaction_id;
+        if(!$transaction_id){
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaction ID missing.'
+            ]);
+        }
+
+        \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+
+        $intent = \Stripe\PaymentIntent::retrieve($transaction_id);
+
+        $paid_amount = $intent->amount / 100;
+
+        $customer_id = Auth::guard('customer')->id();
+        $cart_room_id = session()->get('cart_room_id', []);
+        $cart_checkin_date = session()->get('cart_checkin_date', []);
+        $cart_checkout_date = session()->get('cart_checkout_date', []);
+        $cart_adult = session()->get('cart_adult', []);
+        $cart_children = session()->get('cart_children', []);
+        
+   
+
+        if(empty($cart_room_id)){
+            return response()->json([
+                'success' => false,
+                'message' => 'Cart is empty.'
+            ]);
+        }
+
+        // 1️ Créer l'ordre
+        $order = Order::create([
+            'customer_id' => $customer_id,
+            'order_no' => 'ORD-' . strtoupper(Str::random(8)),
+            'transaction_id' => $transaction_id,
+            'payment_method' => 'Stripe',
+            'paid_amount' => $paid_amount,
+            'booking_date' => now(),
+            'status' => 'Completed',
+        ]);
+
+        // 2️ Enregistrer chaque chambre
+        foreach($cart_room_id as $i => $room_id){
+            $room = Room::find($room_id);
+            if(!$room) continue;
+
+             $checkin = $cart_checkin_date[$i]; // déjà Y-m-d
+             $checkout = $cart_checkout_date[$i]; // déjà Y-m-d
+
+            // $nights = max(1, (strtotime($checkout) - strtotime($checkin))/86400);
+            $nights = max(1, $checkin->diffInDays($checkout));
+            $subtotal = $room->price * $nights;
+
+            OrderDetail::create([
+                'order_id' => $order->id,
+                'room_id' => $room_id,
+                'checkin_date' => $checkin,
+                'checkout_date' => $checkout,
+                'adult' => $cart_adult[$i] ?? 1,
+                'children' => $cart_children[$i] ?? 0,
+                'subtotal' => $subtotal,
+            ]);
+
+
+            // 2️⃣ booked_rooms (IMPORTANT => test)
+            $start = Carbon::parse($checkin);
+            $end = Carbon::parse($checkout);
+
+            while ($start->lt($end)) {
+
+                DB::table('booked_rooms')->insert([
+                    'room_id' => $room_id,
+                    'order_id' => $order->id,
+                    'booking_date' => $start->format('Y-m-d'),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $start->addDay();
+            }
+        }
+
+        
+        
+        // 3️ Envoyer email au client
+        $customer_email = session()->get('billing_email') ?? Auth::guard('customer')->user()->email ?? null;
+        if($customer_email){
+            $subject = 'Booking Confirmed - ' . $order->order_no;
+            $body = "Hi " . (session('billing_name') ?? 'Customer') . ",<br><br>";
+            $body .= "Thank you for your booking. Here are your order details:<br>";
+            $body .= "<ul>";
+            $body .= "<li>Order No: {$order->order_no}</li>";
+            $body .= "<li>Payment Method: {$order->payment_method}</li>";
+            $body .= "<li>Paid Amount: $" . number_format($order->paid_amount, 2) . "</li>";
+            $body .= "<li>Booking Date: " . $order->booking_date->format('d/m/Y') . "</li>";
+            $body .= "</ul><br>";
+            $body .= "We look forward to welcoming you!";
+
+            Mail::to($customer_email)->send(new Websitemail($subject, $body));
+        }
+
+        // 4️⃣ Vider panier
+        session()->forget(['cart_room_id','cart_checkin_date','cart_checkout_date','cart_adult','cart_children','total_price']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment successful and order saved!',
+            'redirect' => route('customer_home')
+        ]);
+    }
+
+
+    private function calculateTotal()
+   {
+    $total = 0;
+
+    $cart_room_id = session()->get('cart_room_id', []);
+    $cart_checkin_date = session()->get('cart_checkin_date', []);
+    $cart_checkout_date = session()->get('cart_checkout_date', []);
+
+    foreach($cart_room_id as $i => $room_id){
+        $room = Room::find($room_id);
+        if(!$room) continue;
+
+        // $checkin = strtotime($cart_checkin_date[$i]);
+        // $checkout = strtotime($cart_checkout_date[$i]);
+
+        $checkin = Carbon::parse($cart_checkin_date[$i]);
+        $checkout = Carbon::parse($cart_checkout_date[$i]);
+
+        // $nights = max(1, ($checkout - $checkin)/86400);
+        $nights = max(1, $checkin->diffInDays($checkout));
+        $total += $room->price * $nights;
+    }
+
+    return $total;
+   }
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////////// Script////////////////////
+@extends('front.layout.app')
+
+@section('main_content')
+<script src="https://www.paypal.com/sdk/js?client-id={{ config('services.paypal.client_id') }}&currency=USD"></script>
+<div class="page-top">
+    <div class="bg"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h2>{{ $global_page_data->payment_heading }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="page-content">
+    <div class="container">
+        <div class="row">
+                  {{-- Payment Method --}}
+            <div class="col-lg-4 col-md-4 checkout-left mb_30">
+                        
+                        <h4>Make Payment</h4>
+                        <select name="payment_method" class="form-control select2" id="paymentMethodChange" autocomplete="off">
+                            <option value="">Select Payment Method</option>
+                            <option value="PayPal">PayPal</option>
+                            <option value="Stripe">Stripe</option>
+                        </select>
+
+                        <div class="paypal mt_20">
+                            <h4>Pay with PayPal</h4>
+                            <div id="paypal-button-container"></div>
+                        </div>
+    
+                        <div class="stripe mt_20">
+                            <h4>Pay with Stripe</h4>
+                            <div id="card-element" style="padding:10px; border:1px solid #ccc; border-radius:5px;"></div>
+                             <button style="margin-top:10px;" id="stripe-button">Pay With Stripe</button>
+                              <div id="card-errors" role="alert" style="color:red; margin-top:10px;"></div>
+                        </div>
+    
+            </div>
+
+            {{-- Billing details --}}
+            <div class="col-lg-4 col-md-4 checkout-right">
+                <div class="inner">
+                    <h4 class="mb_10">Billing Details</h4>
+                    <div>Name: {{ session()->get('billing_name') }}</div>
+                    <div>Email: {{ session()->get('billing_email') }}</div>
+                    <div>Phone: {{ session()->get('billing_phone') }}</div>
+                    <div>Country: {{ session()->get('billing_country') }}</div>
+                    <div>Address: {{ session()->get('billing_address') }}</div>
+                    <div>State: {{ session()->get('billing_state') }}</div>
+                    <div>City: {{ session()->get('billing_city') }}</div>
+                    <div>Zip: {{ session()->get('billing_zip') }}</div>
+                </div>
+            </div>
+
+            {{-- Cart Summary + Payment --}}
+            <div class="col-lg-4 col-md-4 checkout-right">
+                <div class="inner">
+                    <h4 class="mb_10">Cart Details</h4>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <tbody>
+                                @php
+                                    $cart_room_id = session()->get('cart_room_id', []);
+                                    $cart_checkin_date = session()->get('cart_checkin_date', []);
+                                    $cart_checkout_date = session()->get('cart_checkout_date', []);
+                                    $cart_adult = session()->get('cart_adult', []);
+                                    $cart_children = session()->get('cart_children', []);
+
+                                    $total_price = 0;
+                                @endphp
+
+                                @foreach($cart_room_id as $i => $room_id)
+                                    @php
+                                        $room = \App\Models\Room::find($room_id);
+                                        if (!$room) continue;
+
+                                        $checkin_str = $cart_checkin_date[$i] ?? null;
+                                        $checkout_str = $cart_checkout_date[$i] ?? null;
+                                        $nights = 0;
+                                        $subtotal = 0;
+
+                                        if ($checkin_str && $checkout_str) {
+                                             $checkin = strtotime($checkin_str);
+                                            $checkout = strtotime($checkout_str);
+
+                                            $nights = max(1, ceil(($checkout - $checkin)/86400));
+
+                                            $subtotal = $room->price * $nights;
+                                            $total_price += $subtotal;
+                                        }
+                                    @endphp
+                                    <tr>
+                                        <td>{{ $room->name }}</td>
+                                        <td>{{ $checkin_str }} - {{ $checkout_str }}</td>
+                                        <td>Adult: {{ $cart_adult[$i] ?? 1 }}<br>Children: {{ $cart_children[$i] ?? 0 }}</td>
+                                        <td>${{ number_format($subtotal, 2) }}</td>
+                                    </tr>
+                                @endforeach
+
+                                <tr>
+                                    <td colspan="3"><b>Total:</b></td>
+                                    <td><b>${{ number_format($total_price, 2) }}</b></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                   
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<script src="https://js.stripe.com/v3/"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    paypal.Buttons({
+
+        createOrder: function(data, actions) {
+            return actions.order.create({
+                purchase_units: [{
+                    amount: {
+                        //value: '{{ session('total_price') ?? 100 }}'
+                        value: '{{ number_format(session('total_price'), 2, '.', '') }}'
+                    }
+                }]
+            });
+        },
+
+        onApprove: function(data, actions) {
+            return actions.order.capture().then(function(details) {
+
+                // Important : retourner fetch pour que PayPal JS sache que c'est fini
+                return fetch("{{ route('payment.success') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                    },
+                    body: JSON.stringify({
+                        transaction_id: details.id,
+                        paid_amount: '{{ session('total_price') ?? 100 }}'
+                    })
+                })
+                .then(res => res.json())
+                .then(response => {
+                    if(response.success) {
+                        window.location.href = "{{ route('customer_home') }}";
+                    } else {
+                        alert("Payment was successful but saving order failed.");
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Payment succeeded but something went wrong.");
+                });
+
+            });
+        },
+
+        onCancel: function (data) {
+            window.location.href = "{{ route('payment.cancel') }}";
+        }
+
+    }).render('#paypal-button-container');
+
+});
+</script>
+
+  
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    const stripe = Stripe('{{ config('services.stripe.key') }}');
+    const elements = stripe.elements();
+    const card = elements.create('card', {hidePostalCode: true});
+    card.mount('#card-element');
+
+    const stripeBtn = document.getElementById('stripe-button');
+    const cardErrors = document.getElementById('card-errors');
+
+    stripeBtn.addEventListener('click', async function(e) {
+        e.preventDefault();
+        cardErrors.textContent = '';
+        stripeBtn.disabled = true;
+
+        // 1️⃣ Crée le PaymentIntent
+        let res, data;
+        try {
+            res = await fetch('{{ route('stripe.createIntent') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({})
+            });
+            data = await res.json();
+        } catch(err) {
+            cardErrors.textContent = 'Error creating payment intent.';
+            stripeBtn.disabled = false;
+            return;
+        }
+
+        if(!data.success){
+            cardErrors.textContent = data.message || 'Failed to create payment intent.';
+            stripeBtn.disabled = false;
+            return;
+        }
+
+        // 2️⃣ Confirme le paiement
+        const {error, paymentIntent} = await stripe.confirmCardPayment(data.clientSecret, {
+            payment_method: {
+                card: card,
+                billing_details: {
+                    name: "{{ session('billing_name') }}",
+                    email: "{{ session('billing_email') }}"
+                }
+            }
+        });
+
+        if(error){
+            cardErrors.textContent = error.message;
+            stripeBtn.disabled = false;
+            return;
+        }
+
+        if(paymentIntent.status === 'succeeded'){
+            // 3️⃣ Notifie Laravel
+            let notifyResponse;
+            try {
+                const notify = await fetch('{{ route('stripe.success') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ transaction_id: paymentIntent.id })
+                });
+                notifyResponse = await notify.json();
+            } catch(err) {
+                cardErrors.textContent = 'Payment succeeded but saving order failed.';
+                return;
+            }
+
+            if(notifyResponse.success){
+                window.location.href = notifyResponse.redirect;
+            } else {
+                cardErrors.textContent = 'Payment succeeded but saving order failed.';
+            }
+        }
+    });
+});
+</script>
+    
+    
+    
+    
+    
+    
+
+
+
+
+@endsection
+
+//////////////////////////////////////////////////////// Script ////////////////////////////////////////////////////
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const methodSelect = document.getElementById('paymentMethodChange');
+    const paypalDiv = document.querySelector('.paypal');
+    const stripeDiv = document.querySelector('.stripe');
+
+    paypalDiv.style.display = 'none';
+    stripeDiv.style.display = 'none';
+
+    methodSelect.addEventListener('change', function(){
+        paypalDiv.style.display = this.value === 'PayPal' ? 'block' : 'none';
+        stripeDiv.style.display = this.value === 'Stripe' ? 'block' : 'none';
+    });
+});
+
+// Total price
+const totalPrice = {{ number_format(session('total_price', 0), 2, '.', '') }};
+</script>
+
+{{-- PayPal --}}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    paypal.Buttons({
+        createOrder: function(data, actions) {
+            return actions.order.create({
+                purchase_units: [{ amount: { value: totalPrice } }]
+            });
+        },
+        onApprove: function(data, actions) {
+            return actions.order.capture().then(function(details) {
+                return fetch("{{ route('payment.success') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ transaction_id: details.id, paid_amount: totalPrice })
+                })
+                .then(res => res.json())
+                .then(response => {
+                    if(response.success) {
+                        window.location.href = response.redirect;
+                    } else {
+                        alert("Payment succeeded but saving order failed.");
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Payment succeeded but something went wrong.");
+                });
+            });
+        },
+        onCancel: function() {
+            window.location.href = "{{ route('payment.cancel') }}";
+        }
+    }).render('#paypal-button-container');
+});
+</script>
+
+{{-- Stripe --}}
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    const stripe = Stripe('{{ config('services.stripe.key') }}');
+    const elements = stripe.elements();
+    const card = elements.create('card', {hidePostalCode: true});
+    card.mount('#card-element');
+
+    const stripeBtn = document.getElementById('stripe-button');
+    const cardErrors = document.getElementById('card-errors');
+
+    stripeBtn.addEventListener('click', async function(e) {
+        e.preventDefault();
+        cardErrors.textContent = '';
+        stripeBtn.disabled = true;
+
+        let data;
+        try {
+            const res = await fetch('{{ route("stripe.createIntent") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                credentials: 'same-origin',
+                body: JSON.stringify({})
+            });
+            data = await res.json();
+        } catch(err) {
+            cardErrors.textContent = 'Error creating payment intent.';
+            stripeBtn.disabled = false;
+            return;
+        }
+
+        if(!data.success){
+            cardErrors.textContent = data.message || 'Failed to create payment intent.';
+            stripeBtn.disabled = false;
+            return;
+        }
+
+        const {error, paymentIntent} = await stripe.confirmCardPayment(data.clientSecret, {
+            payment_method: {
+                card: card,
+                billing_details: {
+                    name: "{{ session('billing_name') ?? 'Customer' }}",
+                    email: "{{ session('billing_email') ?? 'no-reply@example.com' }}"
+                }
+            }
+        });
+
+        if(error){
+            cardErrors.textContent = error.message;
+            stripeBtn.disabled = false;
+            return;
+        }
+
+        if(paymentIntent.status === 'succeeded'){
+            try {
+                const notify = await fetch('{{ route("stripe.success") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ transaction_id: paymentIntent.id })
+                });
+                const notifyResponse = await notify.json();
+                if(notifyResponse.success){
+                    window.location.href = notifyResponse.redirect;
+                } else {
+                    cardErrors.textContent = 'Payment succeeded but saving order failed.';
+                }
+            } catch(err) {
+                cardErrors.textContent = 'Payment succeeded but saving order failed.';
+            }
+        }
+    });
+});
+</script>
