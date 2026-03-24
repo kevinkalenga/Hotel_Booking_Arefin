@@ -19,6 +19,11 @@
                             
                         </ul>
                     </li>
+                    <li class="{{ Request::is('admin/booking/create') ? 'active' : '' }}">
+                      <a class="nav-link" href="{{ route('admin.booking.create') }}">
+                          <i class="fa fa-hand-o-right"></i> <span>Manual Booking</span>
+                      </a>
+                    </li>
 
                     <li class="nav-item dropdown {{ Request::is('admin/page/about') ||
                       Request::is('admin/page/photo-gallery') || Request::is('admin/page/video-gallery') 

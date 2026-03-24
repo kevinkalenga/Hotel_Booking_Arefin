@@ -15,6 +15,7 @@ class Customer extends Authenticatable
         'password',
         'photo',
         'token',
+        'phone',
     ];
 
     public $timestamps = true;

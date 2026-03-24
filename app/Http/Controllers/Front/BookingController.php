@@ -22,28 +22,35 @@ class BookingController extends Controller
     // Ajouter une chambre au panier
     public function cart_submit(Request $request)
     {
+         // Validation des données envoyées
         $request->validate([
             'room_id' => 'required|integer',
             'checkin_checkout' => 'required',
             'adult' => 'required|integer|min:1',
         ]);
-
+         
+         // Séparation des dates (format: "dd/mm/yyyy - dd/mm/yyyy")
         $dates = explode(' - ', $request->checkin_checkout);
-
+        
+        // Vérification du format
         if (count($dates) != 2) {
             return redirect()->back()->with('error', 'Invalid date range format.');
         }
-
+         
+         // Conversion en objets Carbon
         $checkin = Carbon::createFromFormat('d/m/Y', trim($dates[0]));
         $checkout = Carbon::createFromFormat('d/m/Y', trim($dates[1]));
-
+        
+        // Vérification logique des dates
         if ($checkout->lessThanOrEqualTo($checkin)) {
             return redirect()->back()->with('error', 'Checkout must be after checkin');
         }
-
+        
+        // Formatage pour stockage
         $checkin_date = $checkin->format('Y-m-d');
         $checkout_date = $checkout->format('Y-m-d');
-
+        
+        // Stockage dans la session (panier)
         session()->push('cart_room_id', $request->room_id);
         session()->push('cart_checkin_date', $checkin_date);
         session()->push('cart_checkout_date', $checkout_date);
@@ -62,12 +69,14 @@ class BookingController extends Controller
     // Supprimer une chambre du panier
     public function cart_delete($id)
     {
+        // Récupération des données du panier
         $arr_cart_room_id = session()->get('cart_room_id', []);
         $arr_cart_checkin_date = session()->get('cart_checkin_date', []);
         $arr_cart_checkout_date = session()->get('cart_checkout_date', []);
         $arr_cart_adult = session()->get('cart_adult', []);
         $arr_cart_children = session()->get('cart_children', []);
-
+        
+        // Vérification si panier vide
         if (empty($arr_cart_room_id)) {
             return redirect()->back()->with('error', 'No items found in cart.');
         }
@@ -80,7 +89,8 @@ class BookingController extends Controller
             'cart_adult',
             'cart_children'
         ]);
-
+         
+        // Reconstruction sans l'élément supprimé
         for ($i = 0; $i < count($arr_cart_room_id); $i++) {
             if ($arr_cart_room_id[$i] != $id) {
                 session()->push('cart_room_id', $arr_cart_room_id[$i]);
@@ -97,28 +107,34 @@ class BookingController extends Controller
     // ==================== CHECKOUT ====================
     public function checkout()
     {
+        // Vérifie si le client est connecté
         if (!Auth::guard('customer')->check()) {
             return redirect()->route('cart')->with('error', 'You must login in order to checkout');
         }
-
+        
+        // Vérifie si le panier est vide
         if (!session()->has('cart_room_id') || empty(session('cart_room_id'))) {
             return redirect()->route('cart')->with('error', 'There is no item in the cart');
         }
-
+        
+        // Calcul du total
         $total_price = $this->calculateTotal();
-
+        
+        // Vérifie montant minimum
         if ($total_price < 0.50) {
             return redirect()->back()->with('error', 'Minimum payment is $0.50');
         }
-
+        
+        // Récupération du panier
         $cart_room_id = session()->get('cart_room_id', []);
         $cart_checkin_date = session()->get('cart_checkin_date', []);
         $cart_checkout_date = session()->get('cart_checkout_date', []);
-
+        
+        // Vérification disponibilité (anti double réservation)
         foreach ($cart_room_id as $i => $room_id) {
             $start = Carbon::parse($cart_checkin_date[$i]);
             $end = Carbon::parse($cart_checkout_date[$i]);
-
+             // Boucle jour par jour pour bloquer les dates
             while ($start->lt($end)) {
                 $exists = DB::table('booked_rooms')
                     ->where('room_id', $room_id)
@@ -140,14 +156,17 @@ class BookingController extends Controller
     // ==================== PAYMENT ====================
     public function payment(Request $request)
     {
+        // Vérifie login
         if (!Auth::guard('customer')->check()) {
             return redirect()->route('cart')->with('error', 'You must login in order to checkout');
         }
-
+        
+         // Vérifie panier
         if (!session()->has('cart_room_id') || empty(session('cart_room_id'))) {
             return redirect()->route('cart')->with('error', 'There is no item in the cart');
         }
-
+        
+         // Validation des infos de facturation
         $request->validate([
             'billing_name' => 'required',
             'billing_email' => 'required|email',
@@ -159,7 +178,7 @@ class BookingController extends Controller
             'billing_zip' => 'required',
         ]);
 
-        // Stockage en session
+        // Sauvegarde en session
         session([
             'billing_name' => $request->billing_name,
             'billing_email' => $request->billing_email,
@@ -170,13 +189,15 @@ class BookingController extends Controller
             'billing_city' => $request->billing_city,
             'billing_zip' => $request->billing_zip,
         ]);
-
+        
+         // Calcul total
         $total_price = $this->calculateTotal();
         session(['total_price' => $total_price]);
 
         return view('front.payment');
     }
-
+    
+    // Paiement PayPal (préparation)
     public function paypal()
     {
         if (!session()->has('cart_room_id')) {
@@ -189,41 +210,12 @@ class BookingController extends Controller
         return view('front.payment');
     }
 
-    // public function paymentSuccess(Request $request)
-    // {
-    //     if (!$request->transaction_id) {
-    //         return response()->json(['success' => false, 'message' => 'Transaction ID missing']);
-    //     }
-
-    //     $customer_id = Auth::guard('customer')->id();
-    //     $paid_amount = floatval($request->paid_amount ?? session()->get('total_price', 0));
-
-    //     if ($paid_amount <= 0) {
-    //         return response()->json(['success' => false, 'message' => 'Invalid paid amount']);
-    //     }
-
-    //     $order = Order::create([
-    //         'customer_id' => $customer_id,
-    //         'order_no' => 'ORD-' . strtoupper(Str::random(8)),
-    //         'transaction_id' => $request->transaction_id ?? null,
-    //         'payment_method' => 'PayPal',
-    //         'paid_amount' => $paid_amount,
-    //         'booking_date' => now(),
-    //         'status' => 'Completed',
-    //     ]);
-
-    //     $this->saveOrderDetails($order);
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => 'Payment and order saved successfully!',
-    //         'redirect' => route('customer_home')
-    //     ]);
-    // }
+  
 
 
     public function paymentSuccess(Request $request)
     {
+         // Vérifie transaction
         if (!$request->transaction_id) {
             return response()->json([
                 'success' => false,
@@ -232,6 +224,7 @@ class BookingController extends Controller
         }
 
         $customer_id = Auth::guard('customer')->id();
+        // Montant payé
         $paid_amount = floatval($request->paid_amount ?? session()->get('total_price', 0));
 
         if ($paid_amount <= 0) {
@@ -245,7 +238,7 @@ class BookingController extends Controller
 
         try {
 
-            // ✅ Création commande
+            // Création de la commande
             $order = Order::create([
                 'customer_id' => $customer_id,
                 'order_no' => 'ORD-' . strtoupper(Str::random(8)),
@@ -270,7 +263,7 @@ class BookingController extends Controller
 
         } catch (\Exception $e) {
 
-            // erreur → rollback
+            // Annulation en cas d'erreur
             DB::rollBack();
 
             return response()->json([
@@ -279,7 +272,8 @@ class BookingController extends Controller
             ]);
         }
     }
-
+     
+    // Paiement annulé
     public function paymentCancel()
     {
         return redirect()->route('cart')->with('error', 'Payment cancelled');
@@ -309,28 +303,9 @@ class BookingController extends Controller
         }
     }
 
-    // public function stripeSuccess(Request $request)
-    // {
-    //     $transaction_id = $request->transaction_id;
-    //     if (!$transaction_id) {
-    //         return response()->json(['success' => false, 'message' => 'Transaction ID missing.']);
-    //     }
+   
 
-    //     Stripe::setApiKey(config('services.stripe.secret'));
-    //     $intent = PaymentIntent::retrieve($transaction_id);
-    //     $paid_amount = $intent->amount / 100;
-
-    //     $customer_id = Auth::guard('customer')->id();
-    //     $this->saveOrderDetailsStripe($transaction_id, $paid_amount);
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => 'Payment successful and order saved!',
-    //         'redirect' => route('customer_home')
-    //     ]);
-    // }
-
-
+    // Succès paiement Stripe
     public function stripeSuccess(Request $request)
     {
         $transaction_id = $request->transaction_id;
@@ -345,6 +320,7 @@ class BookingController extends Controller
         Stripe::setApiKey(config('services.stripe.secret'));
     
         try {
+             // Récupération du paiement Stripe
             $intent = PaymentIntent::retrieve($transaction_id);
             $paid_amount = ($intent->amount ?? 0) / 100;
 
@@ -359,7 +335,7 @@ class BookingController extends Controller
 
             DB::beginTransaction();
 
-            // ✅ Création commande
+            // Création de la commande
             $order = Order::create([
                 'customer_id' => $customer_id,
                 'order_no' => 'ORD-' . strtoupper(Str::random(8)),
@@ -399,6 +375,8 @@ class BookingController extends Controller
     }
 
     // ==================== UTILS ====================
+
+        // Calcul du prix total du panier
     private function calculateTotal()
     {
         $total = 0;
@@ -412,14 +390,16 @@ class BookingController extends Controller
 
             $checkin = Carbon::parse($cart_checkin_date[$i]);
             $checkout = Carbon::parse($cart_checkout_date[$i]);
-
+            // Calcul nombre de nuits
             $nights = max(1, $checkin->diffInDays($checkout));
+             // Ajout au total
             $total += $room->price * $nights;
         }
 
         return $total;
     }
-
+    
+    // Sauvegarde des détails de commande + réservation des dates
     private function saveOrderDetails($order)
     {
         $cart_room_id = session()->get('cart_room_id', []);
@@ -450,11 +430,12 @@ class BookingController extends Controller
              
             // Gestion des dates (UNE PAR JOUR)
             $start = $checkin->copy();
+            // Boucle jour par jour pour bloquer les dates
             while ($start->lt($checkout)) {
                 
                 $date = $start->format('Y-m-d');
 
-                //  Vérification anti-surbooking
+                 // Vérification anti double réservation
                 $exists = DB::table('booked_rooms')
                     ->where('room_id', $room_id)
                     ->where('booking_date', $date)
@@ -464,7 +445,7 @@ class BookingController extends Controller
                     throw new \Exception('Room already booked for date: ' . $date);
                 }
             
-               //  Insertion
+                // Insertion dans booked_rooms
                 DB::table('booked_rooms')->insert([
                     'room_id' => $room_id,
                     'order_no' => $order->order_no,
@@ -479,7 +460,8 @@ class BookingController extends Controller
         // vider le panier
         session()->forget(['cart_room_id', 'cart_checkin_date', 'cart_checkout_date', 'cart_adult', 'cart_children', 'total_price']);
     }
-
+     
+     // Version Stripe alternative (non utilisée ici)
     private function saveOrderDetailsStripe($transaction_id, $paid_amount)
     {
         $customer_id = Auth::guard('customer')->id();

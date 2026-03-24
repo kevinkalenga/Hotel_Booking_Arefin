@@ -13,14 +13,14 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('customer_id');
+            $table->unsignedBigInteger('customer_id')->nullable();
             $table->string('order_no')->unique();
             $table->string('transaction_id')->nullable();
             $table->string('payment_method')->nullable();
             $table->string('card_last_digit')->nullable();
             $table->decimal('paid_amount', 10, 2)->default(0);
             $table->date('booking_date')->nullable();
-            $table->string('status')->default('pending');
+            $table->string('status')->default('Pending');
             $table->foreign('customer_id')->references('id')->on('customers')->onDelete('cascade');
             $table->timestamps();
         });

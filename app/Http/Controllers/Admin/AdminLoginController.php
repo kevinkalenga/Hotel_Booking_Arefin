@@ -14,7 +14,8 @@ class AdminLoginController extends Controller
      /* -------------------- Page de connexion -------------------- */
     public function index()
     {
-        // $pass = Hash::make('12345678');
+        //  $pass = Hash::make('12345678');
+        //  dd($pass);
        
         return view('admin.login');
     }

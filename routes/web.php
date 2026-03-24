@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\AdminAmenityController;
 use App\Http\Controllers\Admin\AdminRoomController;
 use App\Http\Controllers\Admin\AdminCustomerController;
 use App\Http\Controllers\Admin\AdminOrderController;
+use App\Http\Controllers\Admin\AdminBookingController;
 
 
 use App\Http\Controllers\Customer\CustomerHomeController;
@@ -255,6 +256,12 @@ Route::group(['middleware' => 'admin'], function(){
    Route::get('/admin/room/gallery/{id}', [AdminRoomController::class, 'gallery'])->name('admin_room_gallery');
    Route::post('/admin/room/gallery/store/{id}', [AdminRoomController::class, 'gallery_store'])->name('admin_room_gallery_store');
    Route::get('/admin/room/gallery/delete/{id}', [AdminRoomController::class, 'gallery_delete'])->name('admin_room_gallery_delete');
+
+  //  Admin Booking 
+  Route::get('/booking/create', [AdminBookingController::class, 'create'])->name('admin.booking.create');
+  Route::post('/booking/store', [AdminBookingController::class, 'store'])->name('admin.booking.store');
+  Route::get('/admin/order/complete/{id}', [AdminOrderController::class, 'markAsCompleted'])
+    ->name('admin_order_complete');
   
 
    

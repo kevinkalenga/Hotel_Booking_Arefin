@@ -36,5 +36,16 @@ class AdminOrderController extends Controller
        return redirect()->back()->with('success', 'Order is deleted successfully');
     }
 
+
+    public function markAsCompleted($id)
+   {
+    $order = \App\Models\Order::findOrFail($id);
+
+    $order->status = 'Completed';
+    $order->save();
+
+    return redirect()->back()->with('success', 'Client checked-in successfully');
+   }
+
     
 }

@@ -17,6 +17,10 @@ class Order extends Model
         'status',
     ];
 
+    protected $attributes = [
+        'status' => 'Pending',
+    ];
+
 
     /**
      * Get the customer who placed this order.
