@@ -18,6 +18,7 @@ class AdminSettingController extends Controller
   {
        $request->validate([
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:2048'],
+            'favicon' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:2048'],
            
         ]);
 
@@ -34,6 +35,18 @@ class AdminSettingController extends Controller
             $request->file('logo')->move(public_path('uploads/'), $final_name);
 
             $obj->logo = $final_name;
+        }
+        if ($request->hasFile('favicon')) {
+            // delete old photo if exists
+            if ($obj->favicon && file_exists(public_path('uploads/' . $obj->favicon))) {
+                unlink(public_path('uploads/' . $obj->favicon));
+            }
+
+            $ext = $request->file('favicon')->extension();
+            $final_name = time() . '.' . $ext;
+            $request->file('favicon')->move(public_path('uploads/'), $final_name);
+
+            $obj->favicon = $final_name;
         }
 
   
