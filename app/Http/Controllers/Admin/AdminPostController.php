@@ -21,7 +21,7 @@ class AdminPostController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'photo' => ['required', 'image', 'mimes:jpg,jpeg,png,gif', 'max:2048'],
+            'photo' => ['required', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:2048'],
             'heading' => 'required',
             'short_content' => 'required',
             'content' => 'required',
@@ -55,7 +55,7 @@ class AdminPostController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif', 'max:2048'],
+            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:2048'],
             'heading' => 'required',
             'short_content' => 'required',
             'content' => 'required',

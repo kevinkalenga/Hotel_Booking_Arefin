@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\AdminRoomController;
 use App\Http\Controllers\Admin\AdminCustomerController;
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminBookingController;
+use App\Http\Controllers\Admin\AdminSettingController;
 
 
 use App\Http\Controllers\Customer\CustomerHomeController;
@@ -102,6 +103,8 @@ Route::group(['middleware' => 'admin'], function(){
 
    //Dashbord Home
    Route::get('/admin/home', [AdminHomeController::class, 'index'])->name('admin_home');
+   Route::get('/admin/setting', [AdminSettingController::class, 'index'])->name('admin_setting');
+   Route::post('/admin/setting/update', [AdminSettingController::class, 'update'])->name('admin_setting_update');
    Route::get('/admin/customers', [AdminCustomerController::class, 'index'])->name('admin_customer');
    Route::get('/admin/customer/change-status/{id}', [AdminCustomerController::class, 'change_status'])->name('admin_customer_change_status');
    Route::get('/admin/order/view', [AdminOrderController::class, 'index'])->name('admin_order_view');

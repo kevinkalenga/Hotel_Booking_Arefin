@@ -56,7 +56,7 @@ class AdminTestimonialController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif', 'max:2048'],
+            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:2048'],
             'name' => 'required',
             'designation' => 'required',
             'comment' => 'required',

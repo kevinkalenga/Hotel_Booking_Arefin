@@ -27,62 +27,7 @@ class AdminBookingController extends Controller
     /**
      * Store a manual booking
      */
-    // public function store(Request $request)
-    // {
-    //     // Validation
-    //     $request->validate([
-    //         'customer_id' => 'nullable|exists:customers,id',
-    //         'room_id' => 'required|exists:rooms,id',
-    //         'checkin' => 'required|date',
-    //         'checkout' => 'required|date|after:checkin',
-    //         'adult' => 'required|integer|min:1',
-    //         'payment_status' => 'required|in:pending,paid',
-    //         'paid_amount' => 'nullable|numeric|min:0',
-    //         'children' => 'nullable|integer|min:0'
-    //     ]);
-
-    //     DB::beginTransaction();
-
-    //     try {
-    //         // Déterminer le status
-    //         $status = $request->payment_status === 'paid' ? 'Completed' : 'Pending';
-
-    //         $customer_id = $request->customer_id;
-
-    //         if (!$customer_id) {
-    //             $customer = Customer::create([
-    //                 'name' => $request->name,
-    //                 'email' => $request->email,
-    //                 'phone' => $request->phone,
-    //                 'password' => Hash::make(Str::random(8)),
-    //             ]);
-
-    //             $customer_id = $customer->id;
-    //         }
-
-    //         // Créer la commande
-    //         $order = Order::create([
-    //             'customer_id' => $customer_id, // nullable
-    //             'order_no' => 'ORD-' . strtoupper(Str::random(8)),
-    //             'transaction_id' => null,
-    //             'payment_method' => 'Manual',
-    //             'paid_amount' => $request->paid_amount ?? 0,
-    //             'booking_date' => now(),
-    //             'status' => $status,
-    //         ]);
-
-    //         // Sauvegarder les détails et vérifier le surbooking
-    //         $this->saveBookingDetails($order, $request);
-
-    //         DB::commit();
-
-    //         return redirect()->back()->with('success', 'Booking created successfully. Status: ' . $order->status);
-
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         return redirect()->back()->with('error', $e->getMessage());
-    //     }
-    // }
+   
 
       
       public function store(Request $request)

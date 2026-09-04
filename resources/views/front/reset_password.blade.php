@@ -19,6 +19,7 @@
                 <div class="row justify-content-center">
                     <div class="col-4">
                       <form action="{{route('customer_reset_password_submit', [$token, $email])}}" method="post">
+
                           @csrf
                         <div class="login-form">
                             <div class="mb-3">

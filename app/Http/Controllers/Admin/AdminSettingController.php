@@ -1,0 +1,44 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\Setting;
+
+class AdminSettingController extends Controller
+{
+  public function index()
+  {
+    $setting_data = Setting::where('id', 1)->first();
+    return view('admin.setting', compact('setting_data'));
+  }
+
+  public function update(Request $request)
+  {
+       $request->validate([
+            'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:2048'],
+           
+        ]);
+
+        $obj = Setting::where('id', 1)->first();
+
+        if ($request->hasFile('logo')) {
+            // delete old photo if exists
+            if ($obj->logo && file_exists(public_path('uploads/' . $obj->logo))) {
+                unlink(public_path('uploads/' . $obj->logo));
+            }
+
+            $ext = $request->file('logo')->extension();
+            $final_name = time() . '.' . $ext;
+            $request->file('logo')->move(public_path('uploads/'), $final_name);
+
+            $obj->logo = $final_name;
+        }
+
+  
+        $obj->save();
+
+        return redirect()->back()->with('success', 'Setting updated successfully');
+  }
+}
