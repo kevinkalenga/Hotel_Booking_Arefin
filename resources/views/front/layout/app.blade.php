@@ -34,8 +34,12 @@
                 <div class="row">
                     <div class="col-md-6 left-side">
                         <ul>
-                            <li class="phone-text">111-222-3333</li>
-                            <li class="email-text">contact@kevindev.com</li>
+                            @if($global_setting_data->top_bar_phone != '')
+                              <li class="phone-text">{{$global_setting_data->top_bar_phone}}</li>
+                            @endif
+                            @if($global_setting_data->top_bar_email != '')
+                              <li class="email-text">{{$global_setting_data->top_bar_email}}</li>
+                            @endif
                         </ul>
                     </div>
                     <div class="col-md-6 right-side">

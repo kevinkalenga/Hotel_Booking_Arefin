@@ -49,6 +49,9 @@ class AdminSettingController extends Controller
             $obj->favicon = $final_name;
         }
 
+        $obj->top_bar_phone = $request->top_bar_phone;
+        $obj->top_bar_email = $request->top_bar_email;
+
   
         $obj->save();
 

@@ -53,17 +53,15 @@
                                               </div>
                                                
                                              
-                                                {{-- <div class="mb-4">
-                                                    <label class="form-label">Heading</label>
-                                                    <input type="text" class="form-control" name="heading" value="{{ old('heading', $slide_data->heading) }}">
+                                                <div class="mb-4">
+                                                    <label class="form-label">Top Bar Phone</label>
+                                                    <input type="text" class="form-control" name="top_bar_phone" value="{{$setting_data->top_bar_phone}}">
                                                 </div>
                                                 <div class="mb-4">
-                                                    <label class="form-label">Text</label>
+                                                    <label class="form-label">Top Bar Email</label>
                                                     
-                                                    <textarea name="text" class="form-control h_100" cols="30" rows="10">
-                                                        {{$slide_data->text}}
-                                                    </textarea>
-                                                </div> --}}
+                                                   <input type="text" class="form-control" name="top_bar_email" value="{{$setting_data->top_bar_email}}">
+                                                </div> 
                                               
                                                 
                                                 
