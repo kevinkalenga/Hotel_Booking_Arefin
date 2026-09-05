@@ -113,14 +113,56 @@
                                                 </div> 
                                                 
                                                 
-                                                
-                                                
-                                                
                                                 <div class="mb-4">
-                                                    <label class="form-label">Top Bar Email</label>
-                                                    
-                                                   <input type="text" class="form-control" name="top_bar_email" value="{{$setting_data->top_bar_email}}">
+                                                    <label class="form-label">Footer Address</label>
+                                                    <textarea class="form-control h_100" cols="30" rows="10" name="footer_address">
+                                                        {{$setting_data->footer_address}}
+                                                    </textarea>
+                                                   
                                                 </div> 
+                                                <div class="mb-4">
+                                                    <label class="form-label">Footer Phone</label>
+                                                    
+                                                   <input type="text" class="form-control" name="footer_phone" value="{{$setting_data->footer_phone}}">
+                                                </div> 
+                                                <div class="mb-4">
+                                                    <label class="form-label">Footer Email</label>
+                                                    
+                                                   <input type="text" class="form-control" name="footer_email" value="{{$setting_data->footer_email}}">
+                                                </div> 
+                                                <div class="mb-4">
+                                                    <label class="form-label">Copyright</label>
+                                                    
+                                                   <input type="text" class="form-control" name="copyright" value="{{$setting_data->copyright}}">
+                                                </div> 
+                                                <div class="mb-4">
+                                                    <label class="form-label">Facebook</label>
+                                                    
+                                                   <input type="text" class="form-control" name="facebook" value="{{$setting_data->facebook}}">
+                                                </div> 
+                                                <div class="mb-4">
+                                                    <label class="form-label">Twitter</label>
+                                                    
+                                                   <input type="text" class="form-control" name="twitter" value="{{$setting_data->twitter}}">
+                                                </div> 
+                                                <div class="mb-4">
+                                                    <label class="form-label">Instagram</label>
+                                                    
+                                                   <input type="text" class="form-control" name="instagram" value="{{$setting_data->instagram}}">
+                                                </div> 
+                                                <div class="mb-4">
+                                                    <label class="form-label">LinkedIn</label>
+                                                    
+                                                   <input type="text" class="form-control" name="linkedin" value="{{$setting_data->linkedin}}">
+                                                </div> 
+                                                <div class="mb-4">
+                                                    <label class="form-label">Pinterest</label>
+                                                    
+                                                   <input type="text" class="form-control" name="pinterest" value="{{$setting_data->pinterest}}">
+                                                </div> 
+                                                
+                                                
+                                                
                                               
                                                 
                                                 

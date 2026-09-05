@@ -27,6 +27,11 @@ return new class extends Migration
             $table->text('footer_phone')->nullable();
             $table->text('footer_email')->nullable();
             $table->text('copyright')->nullable();
+            $table->text('facebook')->nullable();
+            $table->text('twitter')->nullable();
+            $table->text('instagram')->nullable();
+            $table->text('linkedin')->nullable();
+            $table->text('pinterest')->nullable();
             $table->text('theme_color');
             $table->text('analytic_id')->nullable();
            

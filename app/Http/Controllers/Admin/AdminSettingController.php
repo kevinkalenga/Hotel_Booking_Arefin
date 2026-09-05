@@ -54,6 +54,15 @@ class AdminSettingController extends Controller
         $obj->home_feature_status = $request->home_feature_status;
         $obj->home_latest_post_total = $request->home_latest_post_total;
         $obj->home_latest_post_status = $request->home_latest_post_status;
+        $obj->footer_address = $request->footer_address;
+        $obj->footer_phone = $request->footer_phone;
+        $obj->footer_email = $request->footer_email;
+        $obj->copyright = $request->copyright;
+        $obj->facebook = $request->facebook;
+        $obj->twitter = $request->twitter;
+        $obj->instagram = $request->instagram;
+        $obj->linkedin = $request->linkedin;
+        $obj->pinterest = $request->pinterest;
 
   
         $obj->save();

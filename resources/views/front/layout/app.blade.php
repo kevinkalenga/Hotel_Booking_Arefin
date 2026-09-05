@@ -195,8 +195,7 @@
                                     <i class="fa fa-map-marker"></i>
                                 </div>
                                 <div class="right">
-                                    34 Antiger Lane,<br>
-                                    PK Lane, USA, 12937
+                                    {!! nl2br($global_setting_data->footer_address) !!}
                                 </div>
                             </div>
                             <div class="list-item">
@@ -204,7 +203,7 @@
                                     <i class="fa fa-volume-control-phone"></i>
                                 </div>
                                 <div class="right">
-                                    contact@kevindev.com
+                                    {{$global_setting_data->footer_email}}
                                 </div>
                             </div>
                             <div class="list-item">
@@ -212,15 +211,25 @@
                                     <i class="fa fa-envelope-o"></i>
                                 </div>
                                 <div class="right">
-                                    122-222-1212
+                                    {{$global_setting_data->footer_phone}}
                                 </div>
                             </div>
                             <ul class="social">
-                                <li><a href=""><i class="fa fa-facebook-f"></i></a></li>
-                                <li><a href=""><i class="fa fa-twitter"></i></a></li>
-                                <li><a href=""><i class="fa fa-pinterest-p"></i></a></li>
-                                <li><a href=""><i class="fa fa-linkedin"></i></a></li>
-                                <li><a href=""><i class="fa fa-instagram"></i></a></li>
+                                @if($global_setting_data->facebook != '')
+                                   <li><a href="{{$global_setting_data->facebook}}"><i class="fa fa-facebook-f"></i></a></li>
+                                @endif
+                                @if($global_setting_data->twitter != '')
+                                 <li><a href="{{$global_setting_data->ttwitter}}"><i class="fa fa-twitter"></i></a></li>
+                                @endif
+                                @if($global_setting_data->pinterest != '')
+                                 <li><a href="{{$global_setting_data->pinterest}}"><i class="fa fa-pinterest-p"></i></a></li>
+                                @endif
+                                @if($global_setting_data->linkedin != '')
+                                 <li><a href="{{$global_setting_data->linkedin}}"><i class="fa fa-linkedin"></i></a></li>
+                                @endif
+                                @if($global_setting_data->instagram != '')
+                                 <li><a href="{{$global_setting_data->instagram}}"><i class="fa fa-instagram"></i></a></li>
+                                @endif
                             </ul>
                         </div>
                     </div>
@@ -250,7 +259,7 @@
         </div>
 
         <div class="copyright">
-            Copyright 2022, ArefinDev. All Rights Reserved.
+            {{$global_setting_data->copyright}}
         </div>
      
         <div class="scroll-top">
