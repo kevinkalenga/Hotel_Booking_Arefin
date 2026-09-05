@@ -18,13 +18,13 @@
         <link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;500&display=swap" rel="stylesheet">
         
         <!-- Google Analytics -->
-        <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=UA-84213520-6"></script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id={{$global_setting_data->analytic_id}}"></script>
         <script>
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', 'UA-84213520-6');
-        </script> -->
+            gtag('config', '{{$global_setting_data->analytic_id}}');
+        </script> 
 
     </head>
     <body>

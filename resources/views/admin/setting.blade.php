@@ -160,6 +160,11 @@
                                                     
                                                    <input type="text" class="form-control" name="pinterest" value="{{$setting_data->pinterest}}">
                                                 </div> 
+                                                <div class="mb-4">
+                                                    <label class="form-label">Google Analytic Id</label>
+                                                    
+                                                   <input type="text" class="form-control" name="analytic_id" value="{{$setting_data->analytic_id}}">
+                                                </div> 
                                                 
                                                 
                                                 

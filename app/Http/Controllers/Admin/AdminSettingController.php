@@ -63,6 +63,7 @@ class AdminSettingController extends Controller
         $obj->instagram = $request->instagram;
         $obj->linkedin = $request->linkedin;
         $obj->pinterest = $request->pinterest;
+        $obj->analytic_id = $request->analytic_id;
 
   
         $obj->save();
